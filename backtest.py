@@ -1,4 +1,4 @@
-"""Rolling-origin backtest across five seasons. For each fold, the test
+"""Rolling-origin backtest across up to nine seasons. For each fold, the test
 window is the final 45 in-season days of a year (35 for the current one);
 training uses only data ending 8 days before the window, then P5/P50/P95
 models are fit fresh and scored with the same anchor blending production
@@ -26,7 +26,7 @@ X, y, t, h = featuresq.stack(buoy, wx)
 yv = y.to_numpy()
 
 folds = []
-for year in [2022, 2023, 2024, 2025]:
+for year in [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]:
     in_year = t[(t.year == year)]
     if len(in_year) == 0:
         continue
@@ -94,11 +94,11 @@ hs = featuresq.HSET
 for f in results["folds"]:
     ax.plot(hs, f["mae"], color=CYAN, alpha=0.30, lw=1.1)
     ax.plot(hs, f["mae_persist"], color=FAINT, alpha=0.30, lw=1.1, ls="--")
-ax.plot(hs, results["mean_mae"], color=CYAN, lw=2.6, marker="o", ms=4, label="model, 5-season mean")
-ax.plot(hs, results["mean_mae_persist"], color=FAINT, lw=2, ls="--", label="persistence, 5-season mean")
+ax.plot(hs, results["mean_mae"], color=CYAN, lw=2.6, marker="o", ms=4, label="model, all-season mean")
+ax.plot(hs, results["mean_mae_persist"], color=FAINT, lw=2, ls="--", label="persistence, all-season mean")
 ax.set_xlabel("lead time (hours)", color=INK)
 ax.set_ylabel("MAE (deg F)", color=INK)
-ax.set_title(f"Five-season rolling backtest · {total_pairs:,} forecast/outcome pairs · thin lines are individual seasons",
+ax.set_title(f"{len(results['folds'])}-season rolling backtest · {total_pairs:,} forecast/outcome pairs · thin lines are individual seasons",
              color="w", loc="left")
 ax.set_xticks([1, 24, 48, 72, 96, 120, 144, 168])
 ax.grid(alpha=0.15)

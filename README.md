@@ -9,14 +9,25 @@ Five horizon-conditioned gradient-boosted quantile regressors trained on ~280k s
 ## Pipeline
 
 ```bash
-python3 fetch.py           # buoy history 2021-2025 + 45-day realtime -> data/buoy.csv
+python3 fetch.py           # buoy history 2016-2025 + 45-day realtime -> data/buoy.csv
 python3 fetch_weather.py   # ERA5 history + 8-day GFS/HRRR forecast -> data/weather*.csv
 python3 corr.py            # driver study figure (justifies the features)
-python3 train_q.py         # PRODUCTION: quantile trajectory model + all site statistics
+python3 train_q.py         # quantile trajectory model + site statistics (--refit-full for production)
+python3 backtest.py        # five-season rolling backtest
 python3 train7.py          # fixed-horizon point models (kept for comparison)
 python3 analysis.py        # error anatomy figure
 python3 publish.py         # live forecast -> site/data.json + site/stats.json
 ```
+
+## Running live
+
+Three launchd agents (in `~/Library/LaunchAgents`, scripts in `scripts/`):
+
+- `com.buoycast.serve`: keeps the dashboard at http://127.0.0.1:4175/
+- `com.buoycast.refresh`: hourly `publish.py` (fresh buoy obs + weather forecast, ~30 s, two API calls)
+- `com.buoycast.retrain`: Sunday 05:30 full refetch and `train_q.py --refit-full` (~30 min)
+
+Logs land in `~/Library/Logs/buoycast/`. The hourly cost is two keyless API requests, so this is sustainable indefinitely; the weekly retrain keeps the model current with the season.
 
 ## Headline results (held-out test, deg F MAE)
 

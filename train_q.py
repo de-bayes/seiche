@@ -13,6 +13,7 @@ permutation importance, and a +24 h hindcast trace for the site.
 Writes models/q_*.joblib, models/qstats.json."""
 
 import json
+import sys
 
 import joblib
 import numpy as np
@@ -24,6 +25,8 @@ import featuresq
 
 CF = 1.8
 TEST_DAYS = 35
+MAX_ITER = 500
+REFIT_FULL = "--refit-full" in sys.argv  # after stats: refit on ALL data for production
 
 buoy = pd.read_csv("data/buoy.csv", index_col=0, parse_dates=True)
 wx = pd.read_csv("data/weather.csv", index_col=0, parse_dates=True)
@@ -38,7 +41,7 @@ print(f"stacked rows: {len(X)} · train {tr.sum()} · test {te.sum()} · gap kee
 
 models = {}
 for q in featuresq.QUANTILES:
-    m = HistGradientBoostingRegressor(loss="quantile", quantile=q, max_iter=300,
+    m = HistGradientBoostingRegressor(loss="quantile", quantile=q, max_iter=MAX_ITER,
                                       learning_rate=0.07, random_state=11)
     m.fit(X[tr], y[tr])
     models[q] = m
@@ -137,3 +140,14 @@ stats["hindcast24"] = {
 with open("models/qstats.json", "w") as fh:
     json.dump(stats, fh)
 print("saved models/q_*.joblib and models/qstats.json")
+
+if REFIT_FULL:
+    # production models learn from everything, including the test window the
+    # stats were scored on; the stats describe the procedure, not these fits
+    for q in featuresq.QUANTILES:
+        m = HistGradientBoostingRegressor(loss="quantile", quantile=q, max_iter=MAX_ITER,
+                                          learning_rate=0.07, random_state=11)
+        m.fit(X, y)
+        joblib.dump(m, f"models/q_{int(q * 100):02d}.joblib")
+        print(f"refit q{q:.2f} on all {len(X)} rows")
+    print("production models refit on full data")

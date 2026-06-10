@@ -1,9 +1,9 @@
-"""Download Wilmette buoy history (2021-2025) plus the 45-day realtime feed
+"""Download Wilmette buoy history (2016-2025) plus the 45-day realtime feed
 and write the merged hourly series to data/buoy.csv."""
 
 import buoy
 
-frames = buoy.fetch_history(range(2021, 2026))
+frames = buoy.fetch_history(range(2016, 2026))
 print("  realtime: ", end="")
 frames.append(buoy.fetch_realtime())
 print("ok")

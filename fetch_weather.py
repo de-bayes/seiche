@@ -13,7 +13,7 @@ VARS = "temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,shortwav
 
 ARCHIVE = (
     "https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}"
-    "&start_date=2021-05-01&end_date={end}&hourly=" + VARS +
+    "&start_date=2016-04-01&end_date={end}&hourly=" + VARS +
     "&wind_speed_unit=ms&timezone=UTC"
 )
 FORECAST = (

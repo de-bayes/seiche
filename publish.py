@@ -83,6 +83,25 @@ for date, pts in sorted(byday.items()):
         "p95": round(float(np.mean([p["p95"] for p in pts])), 1),
     })
 
+# verification trace: what the +24h forecast said for each recent hour, so
+# the chart shows model calls resolving against the observed line
+import features as basefeat
+import features7
+
+basef = basefeat.build(hourly_buoy)
+wxp = features7.prep_weather(wx)
+fut24 = featuresq.future_generic(wxp, 24, hourly_buoy["WTMP"])
+Xpast = basef.join(fut24, how="left")
+Xpast["h"] = 24.0
+bases = [t0 - pd.Timedelta(hours=k) for k in range(72, 23, -1)]
+bases = [b for b in bases if b in Xpast.index]
+pastfc = []
+if bases:
+    p50_past = models[0.5].predict(Xpast.loc[bases])
+    for b, v in zip(bases, p50_past):
+        off = int((b + pd.Timedelta(hours=24) - t0) / pd.Timedelta(hours=1))
+        pastfc.append({"h": off, "f": round(F(v), 2)})
+
 hist_series = hourly_buoy["WTMP"].ffill().tail(49)
 history = [{"h": i - (len(hist_series) - 1), "t": ts.isoformat(), "f": round(F(v), 2)}
            for i, (ts, v) in enumerate(hist_series.items()) if pd.notna(v)]
@@ -98,6 +117,7 @@ out = {
     },
     "trajectory": trajectory,
     "history": history,
+    "pastfc": pastfc,
     "daily": daily[:7],
 }
 

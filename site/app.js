@@ -142,6 +142,8 @@
       // observed history, then the forecast fan
       band(g, hs, tr.map(function (p) { return p.p05; }), tr.map(function (p) { return p.p95; }), 'rgba(57,194,255,0.12)');
       band(g, hs, tr.map(function (p) { return p.p25; }), tr.map(function (p) { return p.p75; }), 'rgba(57,194,255,0.20)');
+      var pfc = data.pastfc || [];
+      line(g, pfc.map(function (p) { return p.h; }), pfc.map(function (p) { return p.f; }), C.cyan, 1.3, [4, 3]);
       line(g, hist.map(function (p) { return p.h; }), hist.map(function (p) { return p.f; }), C.white, 1.5);
       line(g, hs, tr.map(function (p) { return p.p50; }), C.cyan, 2.2);
 
@@ -154,9 +156,7 @@
       g.ctx.textAlign = 'left';
       g.ctx.fillText('now ' + data.now.wtmp_f.toFixed(1) + '°', g.x(0) + 7, g.y(data.now.wtmp_f) - 9);
       g.ctx.fillStyle = C.faint;
-      g.ctx.fillText('observed', g.x(X0) + 4, g.padT + 10);
-      g.ctx.fillStyle = C.muted;
-      g.ctx.fillText('forecast', g.x(8), g.padT + 10);
+      g.ctx.fillText('observed (solid) vs what we forecast 24h ahead (dashed)', g.x(X0) + 4, g.padT + 10);
 
       // right-edge quantile labels
       var end = tr[tr.length - 1];
@@ -183,7 +183,17 @@
           g.ctx.arc(hx, g.y(hp.f), 3, 0, Math.PI * 2);
           g.ctx.fill();
           g.ctx.textAlign = 'center';
+          var fp = null;
+          (data.pastfc || []).forEach(function (q) { if (q.h === fanHover) fp = q; });
           g.ctx.fillText('observed ' + hp.f.toFixed(1) + '°', hx, g.y(hp.f) - 10);
+          if (fp) {
+            g.ctx.fillStyle = C.cyan;
+            g.ctx.beginPath();
+            g.ctx.arc(hx, g.y(fp.f), 3, 0, Math.PI * 2);
+            g.ctx.fill();
+            g.ctx.fillText('we said ' + fp.f.toFixed(1) + '° · miss ' +
+              (fp.f - hp.f >= 0 ? '+' : '') + (fp.f - hp.f).toFixed(1) + '°', hx, g.y(fp.f) + 18);
+          }
         }
       }
       if (fanHover !== null && fanHover >= 1 && fanHover <= tr.length) {
