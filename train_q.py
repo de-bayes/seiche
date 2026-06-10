@@ -87,6 +87,24 @@ for hz in featuresq.HSET:
     print(f"+{hz:>3}h  mae {stats['horizons'][-1]['mae']:.2f}F vs persist "
           f"{stats['horizons'][-1]['mae_persistence']:.2f}F · cover90 {in90:.2f} · cover50 {in50:.2f}")
 
+# band calibration for publish: empirical quantiles of the ANCHORED median's
+# residuals per horizon (deg C). These become the published band offsets, so
+# bands start tight at short leads and widen exactly as the test errors did.
+calib = {}
+for hz in featuresq.HSET:
+    m = hte == hz
+    if m.sum() < 50:
+        continue
+    res_c = pred[0.5][m] - yte[m]
+    calib[str(hz)] = {
+        "e05": round(float(np.quantile(res_c, 0.05)), 4),
+        "e25": round(float(np.quantile(res_c, 0.25)), 4),
+        "e75": round(float(np.quantile(res_c, 0.75)), 4),
+        "e95": round(float(np.quantile(res_c, 0.95)), 4),
+        "band90_mean_c": round(float(np.mean(pred[0.95][m] - pred[0.05][m])), 4),
+    }
+stats["calib"] = calib
+
 # residual histogram and pred-vs-actual sample at +24h
 m24 = hte == 24
 res = (pred[0.5][m24] - yte[m24]) * CF

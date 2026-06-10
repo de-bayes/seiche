@@ -113,8 +113,10 @@
       grid.appendChild(d);
     });
 
-    /* fan */
-    register(function () {
+    /* fan, with a hover crosshair that tracks the cursor */
+    var fanCanvas = document.getElementById('fan');
+    var fanHover = -1;
+    function drawFan() {
       var tr = data.trajectory;
       var hs = tr.map(function (p) { return p.h; });
       var lo = Infinity, hi = -Infinity;
@@ -125,7 +127,7 @@
         var d = new Date(p.t);
         if (d.getUTCHours() === 0) xt.push({ v: p.h, label: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }) });
       });
-      var g = chart(document.getElementById('fan'),
+      var g = chart(fanCanvas,
         { x0: 0, x1: 168, y0: lo, y1: hi, yTicks: ticksFor(lo, hi, 2), yUnit: '°', xTicks: xt, xGrid: true });
       band(g, hs, tr.map(function (p) { return p.p05; }), tr.map(function (p) { return p.p95; }), 'rgba(57,194,255,0.12)');
       band(g, hs, tr.map(function (p) { return p.p25; }), tr.map(function (p) { return p.p75; }), 'rgba(57,194,255,0.20)');
@@ -136,7 +138,62 @@
       g.ctx.fill();
       g.ctx.textAlign = 'left';
       g.ctx.fillText('now ' + data.now.wtmp_f.toFixed(1) + '°', g.x(0) + 7, g.y(data.now.wtmp_f) - 7);
-    });
+
+      if (fanHover >= 0 && fanHover < tr.length) {
+        var p = tr[fanHover];
+        var cx = g.x(p.h);
+        g.ctx.strokeStyle = 'rgba(255, 91, 209, 0.8)';
+        g.ctx.lineWidth = 1;
+        g.ctx.beginPath();
+        g.ctx.moveTo(cx, g.padT);
+        g.ctx.lineTo(cx, g.padT + g.ph);
+        g.ctx.stroke();
+        [['p05', 1.5], ['p25', 2], ['p50', 3], ['p75', 2], ['p95', 1.5]].forEach(function (kq) {
+          g.ctx.fillStyle = kq[0] === 'p50' ? C.white : C.cyan;
+          g.ctx.beginPath();
+          g.ctx.arc(cx, g.y(p[kq[0]]), kq[1], 0, Math.PI * 2);
+          g.ctx.fill();
+        });
+        var d = new Date(p.t);
+        var lines = [
+          d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric' }) + ' · +' + p.h + 'h',
+          'median  ' + p.p50.toFixed(1) + '°F',
+          'likely  ' + p.p25.toFixed(1) + ' - ' + p.p75.toFixed(1) + '°  (50%)',
+          'range   ' + p.p05.toFixed(1) + ' - ' + p.p95.toFixed(1) + '°  (90%)',
+          'band    ±' + ((p.p95 - p.p05) / 2).toFixed(1) + '°',
+        ];
+        var bw = 0;
+        lines.forEach(function (l) { bw = Math.max(bw, g.ctx.measureText(l).width); });
+        bw += 20;
+        var bh = lines.length * 15 + 12;
+        var bx = cx + 12;
+        if (bx + bw > g.padL + g.pw) bx = cx - bw - 12;
+        var by = g.padT + 6;
+        g.ctx.fillStyle = 'rgba(10, 12, 14, 0.92)';
+        g.ctx.strokeStyle = 'rgba(255, 91, 209, 0.5)';
+        g.ctx.beginPath();
+        g.ctx.roundRect(bx, by, bw, bh, 5);
+        g.ctx.fill();
+        g.ctx.stroke();
+        g.ctx.textAlign = 'left';
+        lines.forEach(function (l, i) {
+          g.ctx.fillStyle = i === 0 ? C.yellow : i === 1 ? C.white : C.muted;
+          g.ctx.fillText(l, bx + 10, by + 18 + i * 15);
+        });
+      }
+    }
+    register(drawFan);
+    function fanMove(e) {
+      var rect = fanCanvas.getBoundingClientRect();
+      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      var frac = (clientX - rect.left - 42) / (rect.width - 56);
+      var h = Math.round(frac * 168);
+      var idx = Math.max(0, Math.min(data.trajectory.length - 1, h - 1));
+      if (idx !== fanHover) { fanHover = idx; drawFan(); }
+    }
+    fanCanvas.addEventListener('mousemove', fanMove);
+    fanCanvas.addEventListener('touchmove', fanMove);
+    fanCanvas.addEventListener('mouseleave', function () { fanHover = -1; drawFan(); });
 
     /* daily digest */
     var dg = document.getElementById('digest');

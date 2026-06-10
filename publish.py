@@ -34,10 +34,30 @@ rows = featuresq.inference_rows(hourly_buoy, wx, t0, horizons)
 models = {q: joblib.load(f"models/q_{int(q * 100):02d}.joblib") for q in featuresq.QUANTILES}
 raw = {q: models[q].predict(rows) for q in featuresq.QUANTILES}
 
-# anchor blend, then enforce quantile ordering per hour
+# anchor blend the median
+hs = np.array(horizons, dtype=float)
 delta = obs_now - raw[0.5][0]
-decay = np.exp(-(np.array(horizons) - 1) / TAU)
-mat = np.sort(np.stack([raw[q] + delta * decay for q in featuresq.QUANTILES]), axis=0)
+decay = np.exp(-(hs - 1) / TAU)
+p50 = raw[0.5] + delta * decay
+
+# calibrated bands: offsets from the median follow the empirical residual
+# quantiles measured on test per horizon (so they start tight and widen),
+# scaled by how wide the model thinks THIS situation is vs the test average,
+# and forced to widen monotonically with lead
+with open("models/qstats.json") as fh:
+    calib = json.load(fh)["calib"]
+ch = np.array(sorted(int(k) for k in calib))
+get = lambda key: np.interp(hs, ch, [calib[str(k)][key] for k in ch])
+band_now = raw[0.95] - raw[0.05]
+ratio = np.clip(band_now / np.maximum(get("band90_mean_c"), 0.1), 0.6, 1.6)
+offsets = {}
+for key, sign in [("e05", -1), ("e25", -1), ("e75", 1), ("e95", 1)]:
+    mag = np.abs(get(key)) * ratio
+    offsets[key] = sign * np.maximum.accumulate(mag)
+mat = np.sort(np.stack([
+    p50 + offsets["e05"], p50 + offsets["e25"], p50,
+    p50 + offsets["e75"], p50 + offsets["e95"],
+]), axis=0)
 
 trajectory = []
 for i, h in enumerate(horizons):

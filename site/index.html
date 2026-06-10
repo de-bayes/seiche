@@ -30,7 +30,7 @@
       <div class="card card--fan">
         <p class="card__kicker">HOURLY FORECAST, NEXT 168 HOURS &middot; P5/P25/P50/P75/P95</p>
         <canvas id="fan" height="320"></canvas>
-        <p class="card__cap">Bands are the model's own quantiles, not a constant error bar: the inner band should contain the outcome half the time, the outer band 90% of the time. Calibration is audited below.</p>
+        <p class="card__cap">Hover anywhere for the exact numbers at that hour. Bands are calibrated to the model's measured test errors at each lead, scaled by how volatile the model thinks this particular setup is: tight where the next hours are knowable, wide where they are not. The inner band should contain the outcome half the time, the outer band 90%.</p>
       </div>
     </section>
 
