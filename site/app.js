@@ -1,15 +1,15 @@
-/* Dashboard renderer: loads data.json and draws the 7-day fan chart, the
-   24-hour strip, and the skill bars on plain canvas. */
+/* Dashboard renderer: data.json (live forecast) + stats.json (validation).
+   All charts are plain canvas with a shared axis helper. */
 (function () {
   'use strict';
 
   var C = {
-    ink: '#cfdce8', muted: '#7d93a8', faint: '#5d7283', rule: 'rgba(140,165,190,0.16)',
-    cyan: '#39c2ff', red: '#ff4d4d', yellow: '#ffd23e', green: '#3ddc6a',
+    ink: '#cfdce8', muted: '#7d93a8', faint: '#5d7283', rule: 'rgba(140,165,190,0.15)',
+    cyan: '#39c2ff', red: '#ff4d4d', yellow: '#ffd23e', green: '#3ddc6a', white: '#ffffff',
   };
   var MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
 
-  function setup(canvas) {
+  function chart(canvas, opts) {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = canvas.clientWidth, h = parseInt(canvas.getAttribute('height'), 10);
     canvas.style.height = h + 'px';
@@ -18,145 +18,92 @@
     var ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.font = '10px ' + MONO;
-    return { ctx: ctx, w: w, h: h };
-  }
+    var padL = opts.padL || 42, padR = opts.padR || 14, padT = opts.padT || 12, padB = opts.padB || 26;
+    var pw = w - padL - padR, ph = h - padT - padB;
+    var x = function (v) { return padL + ((v - opts.x0) / (opts.x1 - opts.x0)) * pw; };
+    var y = function (v) { return padT + ph - ((v - opts.y0) / (opts.y1 - opts.y0)) * ph; };
 
-  function frame(ctx, padL, padT, w, h, yMin, yMax, step) {
     ctx.strokeStyle = C.rule;
     ctx.fillStyle = C.faint;
     ctx.lineWidth = 1;
-    for (var t = Math.ceil(yMin / step) * step; t <= yMax; t += step) {
-      var y = padT + h - ((t - yMin) / (yMax - yMin)) * h;
-      ctx.beginPath();
-      ctx.moveTo(padL, y);
-      ctx.lineTo(padL + w, y);
-      ctx.stroke();
+    (opts.yTicks || []).forEach(function (t) {
+      ctx.beginPath(); ctx.moveTo(padL, y(t)); ctx.lineTo(padL + pw, y(t)); ctx.stroke();
       ctx.textAlign = 'right';
-      ctx.fillText(t + '°', padL - 6, y + 3);
+      ctx.fillText(String(t) + (opts.yUnit || ''), padL - 5, y(t) + 3);
+    });
+    (opts.xTicks || []).forEach(function (t) {
+      var label = typeof t === 'object' ? t.label : String(t);
+      var v = typeof t === 'object' ? t.v : t;
+      if (opts.xGrid) { ctx.beginPath(); ctx.moveTo(x(v), padT); ctx.lineTo(x(v), padT + ph); ctx.stroke(); }
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x(v), padT + ph + 16);
+    });
+    return { ctx: ctx, x: x, y: y, padL: padL, padT: padT, pw: pw, ph: ph };
+  }
+
+  function line(g, xs, ys, color, width, dash) {
+    g.ctx.strokeStyle = color;
+    g.ctx.lineWidth = width || 1.8;
+    g.ctx.setLineDash(dash || []);
+    g.ctx.lineJoin = 'round';
+    g.ctx.beginPath();
+    var started = false;
+    for (var i = 0; i < xs.length; i++) {
+      if (ys[i] === null || ys[i] === undefined) continue;
+      started ? g.ctx.lineTo(g.x(xs[i]), g.y(ys[i])) : g.ctx.moveTo(g.x(xs[i]), g.y(ys[i]));
+      started = true;
     }
+    g.ctx.stroke();
+    g.ctx.setLineDash([]);
   }
 
-  function fanChart(canvas, data) {
-    var s = setup(canvas), ctx = s.ctx;
-    var padL = 40, padR = 16, padT = 12, padB = 26;
-    var w = s.w - padL - padR, h = s.h - padT - padB;
-
-    var pts = [{ x: 0, v: data.now.wtmp_f, mae: 0, label: 'now' }];
-    data.daily.forEach(function (d) {
-      pts.push({ x: d.k, v: d.wtmp_f, mae: d.mae_f, label: d.label });
-    });
-    var lo = Infinity, hi = -Infinity;
-    pts.forEach(function (p) { lo = Math.min(lo, p.v - p.mae); hi = Math.max(hi, p.v + p.mae); });
-    lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
-
-    var X = function (k) { return padL + (k / 7) * w; };
-    var Y = function (v) { return padT + h - ((v - lo) / (hi - lo)) * h; };
-
-    frame(ctx, padL, padT, w, h, lo, hi, 2);
-
-    ctx.fillStyle = 'rgba(57, 194, 255, 0.16)';
-    ctx.beginPath();
-    pts.forEach(function (p, i) { i ? ctx.lineTo(X(p.x), Y(p.v + p.mae)) : ctx.moveTo(X(p.x), Y(p.v + p.mae)); });
-    for (var i = pts.length - 1; i >= 0; i--) ctx.lineTo(X(pts[i].x), Y(pts[i].v - pts[i].mae));
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = C.cyan;
-    ctx.lineWidth = 2.2;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    pts.forEach(function (p, i) { i ? ctx.lineTo(X(p.x), Y(p.v)) : ctx.moveTo(X(p.x), Y(p.v)); });
-    ctx.stroke();
-
-    pts.forEach(function (p) {
-      ctx.fillStyle = p.x === 0 ? '#fff' : C.cyan;
-      ctx.beginPath();
-      ctx.arc(X(p.x), Y(p.v), 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.textAlign = 'center';
-      ctx.fillStyle = C.ink;
-      ctx.fillText(p.v.toFixed(0) + '°', X(p.x), Y(p.v) - 9);
-      ctx.fillStyle = C.faint;
-      ctx.fillText(p.label, X(p.x), padT + h + 16);
-    });
+  function band(g, xs, lo, hi, color) {
+    g.ctx.fillStyle = color;
+    g.ctx.beginPath();
+    xs.forEach(function (v, i) { i ? g.ctx.lineTo(g.x(v), g.y(hi[i])) : g.ctx.moveTo(g.x(v), g.y(hi[i])); });
+    for (var i = xs.length - 1; i >= 0; i--) g.ctx.lineTo(g.x(xs[i]), g.y(lo[i]));
+    g.ctx.closePath();
+    g.ctx.fill();
   }
 
-  function hourlyChart(canvas, data) {
-    var s = setup(canvas), ctx = s.ctx;
-    var padL = 40, padR = 16, padT = 14, padB = 24;
-    var w = s.w - padL - padR, h = s.h - padT - padB;
-    var pts = [{ h: 0, v: data.now.wtmp_f, mae: 0, label: 'now' }];
-    data.hourly.forEach(function (d) { pts.push({ h: d.h, v: d.wtmp_f, mae: d.mae_f, label: '+' + d.h + 'h' }); });
-    var lo = Infinity, hi = -Infinity;
-    pts.forEach(function (p) { lo = Math.min(lo, p.v - p.mae); hi = Math.max(hi, p.v + p.mae); });
-    lo = Math.floor(lo - 0.5); hi = Math.ceil(hi + 0.5);
-    var X = function (k) { return padL + (k / 24) * w; };
-    var Y = function (v) { return padT + h - ((v - lo) / (hi - lo)) * h; };
-    frame(ctx, padL, padT, w, h, lo, hi, 1);
-    ctx.fillStyle = 'rgba(57, 194, 255, 0.16)';
-    ctx.beginPath();
-    pts.forEach(function (p, i) { i ? ctx.lineTo(X(p.h), Y(p.v + p.mae)) : ctx.moveTo(X(p.h), Y(p.v + p.mae)); });
-    for (var i = pts.length - 1; i >= 0; i--) ctx.lineTo(X(pts[i].h), Y(pts[i].v - pts[i].mae));
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = C.cyan;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    pts.forEach(function (p, i) { i ? ctx.lineTo(X(p.h), Y(p.v)) : ctx.moveTo(X(p.h), Y(p.v)); });
-    ctx.stroke();
-    pts.forEach(function (p) {
-      ctx.fillStyle = p.h === 0 ? '#fff' : C.cyan;
-      ctx.beginPath();
-      ctx.arc(X(p.h), Y(p.v), 2.6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = C.ink;
-      ctx.textAlign = 'center';
-      ctx.fillText(p.v.toFixed(1) + '°', X(p.h), Y(p.v) - 8);
-      ctx.fillStyle = C.faint;
-      ctx.fillText(p.label, X(p.h), padT + h + 15);
-    });
+  function ticksFor(lo, hi, step) {
+    var out = [];
+    for (var t = Math.ceil(lo / step) * step; t <= hi; t += step) out.push(Math.round(t * 10) / 10);
+    return out;
   }
 
-  function skillChart(canvas, groups, series) {
-    var s = setup(canvas), ctx = s.ctx;
-    var padL = 34, padR = 8, padT = 12, padB = 26;
-    var w = s.w - padL - padR, h = s.h - padT - padB;
-    var maxV = 0;
-    groups.forEach(function (g) { series.forEach(function (sr) { if (g[sr.key] != null) maxV = Math.max(maxV, g[sr.key]); }); });
-    maxV = Math.ceil(maxV * 1.15 * 2) / 2;
-    frame(ctx, padL, padT, w, h, 0, maxV, maxV > 2 ? 1 : 0.5);
-    var gw = w / groups.length;
-    var bw = Math.min(16, (gw - 14) / series.length);
-    groups.forEach(function (g, gi) {
-      var cx = padL + gi * gw + gw / 2;
-      series.forEach(function (sr, si) {
-        var v = g[sr.key];
-        if (v == null) return;
-        var x = cx + (si - (series.length - 1) / 2) * (bw + 3) - bw / 2;
-        var bh = (v / maxV) * h;
-        ctx.fillStyle = sr.color;
-        ctx.fillRect(x, padT + h - bh, bw, bh);
-      });
-      ctx.fillStyle = C.faint;
-      ctx.textAlign = 'center';
-      ctx.fillText(g.label, cx, padT + h + 16);
-    });
-    var lx = padL + 4;
-    series.forEach(function (sr) {
-      ctx.fillStyle = sr.color;
-      ctx.fillRect(lx, padT - 6, 8, 8);
-      ctx.fillStyle = C.muted;
-      ctx.textAlign = 'left';
-      ctx.fillText(sr.name, lx + 12, padT + 2);
-      lx += 12 + ctx.measureText(sr.name).width + 16;
-    });
-  }
+  var charts = [];
+  function register(fn) { charts.push(fn); fn(); }
 
-  fetch('/data.json').then(function (r) { return r.json(); }).then(function (data) {
+  Promise.all([
+    fetch('/data.json').then(function (r) { return r.json(); }),
+    fetch('/stats.json').then(function (r) { return r.json(); }),
+  ]).then(function (res) {
+    var data = res[0], stats = res[1];
     var gen = new Date(data.generated_utc);
     document.getElementById('stamp').textContent =
       'UPDATED ' + gen.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).toUpperCase();
 
+    /* chips */
+    var h24 = null, h168 = null;
+    stats.horizons.forEach(function (s) { if (s.h === 24) h24 = s; if (s.h === 168) h168 = s; });
+    var chips = [
+      ['+24H TEST MAE', h24.mae.toFixed(2) + '°F'],
+      ['+7D TEST MAE', h168.mae.toFixed(2) + '°F'],
+      ['SKILL VS PERSISTENCE +7D', Math.round((1 - h168.mae / h168.mae_persistence) * 100) + '%'],
+      ['90% BAND COVERAGE +24H', Math.round(h24.cover90 * 100) + '%'],
+      ['TRAINING ROWS', (stats.n_train / 1000).toFixed(0) + 'k'],
+      ['FEATURES', String(stats.n_features)],
+    ];
+    var cwrap = document.getElementById('chips');
+    chips.forEach(function (c) {
+      var d = document.createElement('div');
+      d.className = 'chip';
+      d.innerHTML = '<span>' + c[0] + '</span><b>' + c[1] + '</b>';
+      cwrap.appendChild(d);
+    });
+
+    /* now card */
     document.getElementById('now-wtmp').textContent = data.now.wtmp_f.toFixed(1) + '°F';
     var grid = document.getElementById('now-grid');
     [['AIR', data.now.atmp_f.toFixed(1) + '°F'], ['WAVES', data.now.wvht_ft + ' ft'],
@@ -166,42 +113,171 @@
       grid.appendChild(d);
     });
 
-    fanChart(document.getElementById('fan'), data);
-    hourlyChart(document.getElementById('hourly'), data);
-
-    var hg = Object.keys(data.metrics.hourly).map(function (k) {
-      var m = data.metrics.hourly[k];
-      return { label: k, persist: m.persistence.test_mae_f, lags: m.lasso_lags_only.test_mae_f, model: m[m.best].test_mae_f };
+    /* fan */
+    register(function () {
+      var tr = data.trajectory;
+      var hs = tr.map(function (p) { return p.h; });
+      var lo = Infinity, hi = -Infinity;
+      tr.forEach(function (p) { lo = Math.min(lo, p.p05); hi = Math.max(hi, p.p95); });
+      lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
+      var xt = [];
+      tr.forEach(function (p) {
+        var d = new Date(p.t);
+        if (d.getUTCHours() === 0) xt.push({ v: p.h, label: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }) });
+      });
+      var g = chart(document.getElementById('fan'),
+        { x0: 0, x1: 168, y0: lo, y1: hi, yTicks: ticksFor(lo, hi, 2), yUnit: '°', xTicks: xt, xGrid: true });
+      band(g, hs, tr.map(function (p) { return p.p05; }), tr.map(function (p) { return p.p95; }), 'rgba(57,194,255,0.12)');
+      band(g, hs, tr.map(function (p) { return p.p25; }), tr.map(function (p) { return p.p75; }), 'rgba(57,194,255,0.20)');
+      line(g, hs, tr.map(function (p) { return p.p50; }), C.cyan, 2.2);
+      g.ctx.fillStyle = C.white;
+      g.ctx.beginPath();
+      g.ctx.arc(g.x(0), g.y(data.now.wtmp_f), 3.5, 0, Math.PI * 2);
+      g.ctx.fill();
+      g.ctx.textAlign = 'left';
+      g.ctx.fillText('now ' + data.now.wtmp_f.toFixed(1) + '°', g.x(0) + 7, g.y(data.now.wtmp_f) - 7);
     });
-    skillChart(document.getElementById('skill-hourly'), hg, [
-      { key: 'persist', name: 'persistence', color: '#5d7283' },
-      { key: 'lags', name: 'lags only', color: '#7d93a8' },
-      { key: 'model', name: 'full model', color: C.cyan },
-    ]);
 
-    var dg = Object.keys(data.metrics.daily).map(function (k) {
-      var m = data.metrics.daily[k];
-      return { label: k, persist: m.persistence.test_mae_f, model: m[m.best].test_mae_f };
+    /* daily digest */
+    var dg = document.getElementById('digest');
+    data.daily.forEach(function (d) {
+      var el = document.createElement('div');
+      el.className = 'digest__day';
+      el.innerHTML = '<span class="digest__label">' + d.label.toUpperCase() + '</span>' +
+        '<b>' + d.p50.toFixed(0) + '°</b>' +
+        '<span class="digest__range">' + d.p05.toFixed(0) + '-' + d.p95.toFixed(0) + '°</span>';
+      dg.appendChild(el);
     });
-    skillChart(document.getElementById('skill-daily'), dg, [
-      { key: 'persist', name: 'persistence', color: '#5d7283' },
-      { key: 'model', name: 'full model', color: C.cyan },
-    ]);
 
-    window.addEventListener('resize', function () {
-      fanChart(document.getElementById('fan'), data);
-      hourlyChart(document.getElementById('hourly'), data);
-      skillChart(document.getElementById('skill-hourly'), hg, [
-        { key: 'persist', name: 'persistence', color: '#5d7283' },
-        { key: 'lags', name: 'lags only', color: '#7d93a8' },
-        { key: 'model', name: 'full model', color: C.cyan },
-      ]);
-      skillChart(document.getElementById('skill-daily'), dg, [
-        { key: 'persist', name: 'persistence', color: '#5d7283' },
-        { key: 'model', name: 'full model', color: C.cyan },
-      ]);
+    /* skill curve */
+    register(function () {
+      var hs = stats.horizons.map(function (s) { return s.h; });
+      var maxY = Math.ceil(Math.max.apply(null, stats.horizons.map(function (s) { return s.mae_persistence; })) + 0.5);
+      var g = chart(document.getElementById('skill'),
+        { x0: 0, x1: 168, y0: 0, y1: maxY, yTicks: ticksFor(0, maxY, 1), yUnit: '°',
+          xTicks: [24, 48, 72, 96, 120, 144, 168].map(function (v) { return { v: v, label: v + 'h' }; }) });
+      line(g, hs, stats.horizons.map(function (s) { return s.mae_persistence; }), C.faint, 1.6, [5, 4]);
+      line(g, hs, stats.horizons.map(function (s) { return s.mae; }), C.cyan, 2.2);
+      line(g, hs, stats.horizons.map(function (s) { return s.p90_abs_err; }), C.cyan, 1, [2, 3]);
+      g.ctx.fillStyle = C.muted;
+      g.ctx.textAlign = 'left';
+      g.ctx.fillText('persistence (dashed) · model MAE (solid) · model P90 |err| (dotted)', g.padL + 4, g.padT + 2);
     });
-  }).catch(function () {
+
+    /* coverage */
+    register(function () {
+      var hs = stats.horizons.map(function (s) { return s.h; });
+      var g = chart(document.getElementById('coverage'),
+        { x0: 0, x1: 168, y0: 0, y1: 1, yTicks: [0, 0.25, 0.5, 0.75, 0.9, 1],
+          xTicks: [24, 48, 72, 96, 120, 144, 168].map(function (v) { return { v: v, label: v + 'h' }; }) });
+      line(g, [0, 168], [0.9, 0.9], C.cyan, 0.8, [4, 4]);
+      line(g, [0, 168], [0.5, 0.5], C.yellow, 0.8, [4, 4]);
+      line(g, hs, stats.horizons.map(function (s) { return s.cover90; }), C.cyan, 2);
+      line(g, hs, stats.horizons.map(function (s) { return s.cover50; }), C.yellow, 2);
+    });
+
+    /* hindcast */
+    register(function () {
+      var hc = stats.hindcast24;
+      var n = hc.time.length;
+      var xs = hc.time.map(function (_, i) { return i; });
+      var lo = Math.floor(Math.min.apply(null, hc.p05) - 1);
+      var hi = Math.ceil(Math.max.apply(null, hc.p95) + 1);
+      var xt = [];
+      hc.time.forEach(function (t, i) {
+        var d = new Date(t);
+        if (d.getUTCDate() % 7 === 0 && d.getUTCHours() === 0) {
+          xt.push({ v: i, label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) });
+        }
+      });
+      var g = chart(document.getElementById('hindcast'),
+        { x0: 0, x1: n - 1, y0: lo, y1: hi, yTicks: ticksFor(lo, hi, 2), yUnit: '°', xTicks: xt, xGrid: true });
+      band(g, xs, hc.p05, hc.p95, 'rgba(57,194,255,0.12)');
+      line(g, xs, hc.p50, C.cyan, 1.4);
+      line(g, xs, hc.actual, C.white, 1.4);
+      g.ctx.fillStyle = C.muted;
+      g.ctx.textAlign = 'left';
+      g.ctx.fillText('actual (white) · +24h median (cyan) · 90% band (shaded)', g.padL + 4, g.padT + 2);
+    });
+
+    /* residual histogram */
+    register(function () {
+      var r = stats.residuals24;
+      var maxC = Math.max.apply(null, r.counts);
+      var g = chart(document.getElementById('residuals'),
+        { x0: r.edges[0], x1: r.edges[r.edges.length - 1], y0: 0, y1: maxC * 1.1,
+          yTicks: [], xTicks: [-3, -2, -1, 0, 1, 2, 3].map(function (v) { return { v: v, label: v + '°' }; }) });
+      r.counts.forEach(function (c, i) {
+        var x0 = g.x(r.edges[i]), x1 = g.x(r.edges[i + 1]);
+        var bh = (c / (maxC * 1.1)) * g.ph;
+        g.ctx.fillStyle = r.edges[i] >= -0.25 && r.edges[i + 1] <= 0.25 ? C.cyan : 'rgba(57,194,255,0.45)';
+        g.ctx.fillRect(x0 + 0.5, g.padT + g.ph - bh, x1 - x0 - 1, bh);
+      });
+      line(g, [0, 0], [0, maxC * 1.1], C.white, 0.8, [3, 3]);
+    });
+
+    /* scatter */
+    register(function () {
+      var pts = stats.scatter24;
+      var lo = Infinity, hi = -Infinity;
+      pts.forEach(function (p) { lo = Math.min(lo, p[0], p[1]); hi = Math.max(hi, p[0], p[1]); });
+      lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
+      var t5 = ticksFor(lo, hi, 5);
+      var g = chart(document.getElementById('scatter'),
+        { x0: lo, x1: hi, y0: lo, y1: hi, yTicks: t5, yUnit: '°',
+          xTicks: t5.map(function (v) { return { v: v, label: v + '°' }; }) });
+      line(g, [lo, hi], [lo, hi], C.faint, 1, [4, 4]);
+      g.ctx.fillStyle = 'rgba(57,194,255,0.5)';
+      pts.forEach(function (p) {
+        g.ctx.beginPath();
+        g.ctx.arc(g.x(p[0]), g.y(p[1]), 2, 0, Math.PI * 2);
+        g.ctx.fill();
+      });
+    });
+
+    /* importance */
+    register(function () {
+      var canvas = document.getElementById('importance');
+      var imp = stats.importance;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = canvas.clientWidth, hgt = parseInt(canvas.getAttribute('height'), 10);
+      canvas.style.height = hgt + 'px';
+      canvas.width = w * dpr; canvas.height = hgt * dpr;
+      var ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.font = '10px ' + MONO;
+      var padL = 130, padR = 40;
+      var rowH = (hgt - 10) / imp.length;
+      var maxV = imp[0].value;
+      imp.forEach(function (f, i) {
+        var yy = 5 + i * rowH;
+        ctx.fillStyle = C.muted;
+        ctx.textAlign = 'right';
+        ctx.fillText(f.name, padL - 8, yy + rowH / 2 + 3);
+        ctx.fillStyle = f.name.indexOf('fut_') === 0 ? C.green : C.cyan;
+        var bw = ((w - padL - padR) * f.value) / maxV;
+        ctx.fillRect(padL, yy + 2, bw, rowH - 5);
+        ctx.fillStyle = C.faint;
+        ctx.textAlign = 'left';
+        ctx.fillText(f.value.toFixed(2), padL + bw + 5, yy + rowH / 2 + 3);
+      });
+      ctx.fillStyle = C.muted;
+      ctx.textAlign = 'left';
+    });
+
+    /* validation table */
+    var tbl = document.getElementById('stat-table');
+    var head = '<tr><th>lead</th><th>MAE</th><th>persistence</th><th>skill</th><th>RMSE</th><th>bias</th><th>P90 |err|</th><th>90% width</th><th>cover 90/50</th><th>n</th></tr>';
+    tbl.innerHTML = head + stats.horizons.map(function (s) {
+      var skill = Math.round((1 - s.mae / s.mae_persistence) * 100);
+      return '<tr><td>+' + s.h + 'h</td><td>' + s.mae.toFixed(2) + '</td><td>' + s.mae_persistence.toFixed(2) +
+        '</td><td>' + (skill >= 0 ? '+' : '') + skill + '%</td><td>' + s.rmse.toFixed(2) + '</td><td>' + s.bias.toFixed(2) +
+        '</td><td>' + s.p90_abs_err.toFixed(2) + '</td><td>' + s.band90_width.toFixed(1) +
+        '</td><td>' + Math.round(s.cover90 * 100) + '/' + Math.round(s.cover50 * 100) + '</td><td>' + s.n + '</td></tr>';
+    }).join('');
+
+    window.addEventListener('resize', function () { charts.forEach(function (fn) { fn(); }); });
+  }).catch(function (e) {
     document.getElementById('stamp').textContent = 'DATA UNAVAILABLE, RUN publish.py';
   });
 })();

@@ -1,6 +1,10 @@
 # buoycast
 
-ML water temperature forecasts for the Evanston-Wilmette lakefront, from hourly out to seven days, built on the Wilmette buoy (NDBC 45174), ERA5 reanalysis, and the GFS/HRRR forecast. Ships with a dashboard in `site/` (plain static, Vercel-ready).
+Probabilistic water temperature forecasts for the Evanston-Wilmette lakefront: an hourly P5/P25/P50/P75/P95 trajectory out to 168 hours, built on the Wilmette buoy (NDBC 45174), ERA5 reanalysis, and the GFS/HRRR forecast. One target, measured hard. Ships with a dashboard in `site/` (plain static, Vercel-ready).
+
+## Production model
+
+Five horizon-conditioned gradient-boosted quantile regressors trained on ~280k stacked (time, horizon) rows, anchor-blended to the latest observation with an 8-hour decay. Test MAE (gap-separated final 35 days): 0.16F at +1h, 0.91F at +24h, 1.85F at +168h, where persistence runs 0.16 / 1.26 / 4.01F. The 90% band covers 83 to 93% across leads; calibration is shown on the site, not assumed.
 
 ## Pipeline
 
@@ -8,9 +12,10 @@ ML water temperature forecasts for the Evanston-Wilmette lakefront, from hourly 
 python3 fetch.py           # buoy history 2021-2025 + 45-day realtime -> data/buoy.csv
 python3 fetch_weather.py   # ERA5 history + 8-day GFS/HRRR forecast -> data/weather*.csv
 python3 corr.py            # driver study figure (justifies the features)
-python3 train7.py          # weather-aware hourly + daily models, held-out validation
+python3 train_q.py         # PRODUCTION: quantile trajectory model + all site statistics
+python3 train7.py          # fixed-horizon point models (kept for comparison)
 python3 analysis.py        # error anatomy figure
-python3 publish.py         # live forecast -> site/data.json + figures -> site/reports/
+python3 publish.py         # live forecast -> site/data.json + site/stats.json
 ```
 
 ## Headline results (held-out test, deg F MAE)
