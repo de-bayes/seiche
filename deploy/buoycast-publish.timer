@@ -2,8 +2,11 @@
 Description=run buoycast publish hourly
 
 [Timer]
-OnCalendar=*-*-* *:08:00
-RandomizedDelaySec=120
+# every 10 minutes, offset +4 so each run lands just after the buoy's
+# 10-minute transmission; weather models only refresh 4x daily but the
+# live anchor is worth keeping current
+OnCalendar=*:04/10
+RandomizedDelaySec=45
 Persistent=true
 
 [Install]

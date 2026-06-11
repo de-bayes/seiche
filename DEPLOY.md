@@ -7,7 +7,7 @@
   `buoycast -> 76.76.21.21`). Deploy with `cd site && vercel deploy --prod --yes`
   (must run from `site/`, not the repo root).
 - **Worker**: GCE VM `buoycast`, zone `us-central1-a`, e2-micro free tier,
-  IP 34.172.202.78, 4GB swap. Publishes hourly at :08, retrains Sundays
+  IP 34.172.202.78, 4GB swap. Publishes every 10 minutes (:04, :14, ...), retrains Sundays
   09:30 UTC (systemd timers). Code lives in /opt/buoycast; update by scp'ing
   a tarball (repo is private, the VM has no git auth).
 - **Data path**: browser -> Vercel -> rewrite proxy -> Caddy on the VM at
