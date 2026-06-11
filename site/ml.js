@@ -1131,18 +1131,28 @@
     var P1 = 3.0, P2 = 9.5, P3 = 13.5, P4 = PIPE_DUR;    // ends of phases 1..4
 
     // ---- four column x-bands from live width ----
-    var padX = Math.max(8, w * 0.012);
-    var gap = Math.max(10, w * 0.018);
-    var usable = w - padX * 2 - gap * 3;
-    // weights: sources, inputs(widest), models, forecast
-    var cw = [0.20, 0.36, 0.22, 0.22];
+    // Symmetric outer margins, one shared gutter between every column, and a
+    // reserved label gutter on the far right so the fan's P95/P50/P5 labels
+    // never clip against the canvas edge.
+    var padX = Math.max(14, w * 0.018);
+    var gap = Math.max(18, w * 0.026);
+    var labelGutter = 30;                                // room for the fan's edge labels
+    var usable = w - padX * 2 - gap * 3 - labelGutter;
+    // weights: sources, inputs(widest), models, forecast (sum to 1)
+    var cw = [0.21, 0.35, 0.22, 0.22];
     var col = [], cx = padX;
     for (var ci = 0; ci < 4; ci++) {
       var cwidth = usable * cw[ci];
       col.push({ x: cx, w: cwidth, cx: cx + cwidth / 2 });
       cx += cwidth + gap;
     }
-    var topY = 14, botY = h - 14;
+    // shared vertical frame: every column centers its own block on this midline,
+    // inside a common content band [topY, botY]. contentH is the common target
+    // height the four columns aim to fill, so the composition stays balanced.
+    var topY = 16, botY = h - 16;
+    var midY = (topY + botY) / 2;
+    var contentH = (botY - topY) * 0.9;
+    function blockTop(bh) { return midY - bh / 2; }
 
     // ---- helpers ----
     function rrect(x, y, ww, hh, r) {
@@ -1180,11 +1190,14 @@
     // PHASE 1: source cards fade in, staggered
     // =====================================================================
     var srcN = PIPE.sources.length;
-    var srcCardH = Math.min(74, (botY - topY - (srcN - 1) * 10) / srcN);
-    var srcGap = (botY - topY - srcCardH * srcN) / (srcN - 1);
+    // cards sized so the stack fills the shared content height, centered on midline
+    var srcGap = 22;
+    var srcCardH = Math.min(82, (contentH - (srcN - 1) * srcGap) / srcN);
+    var srcStackH = srcCardH * srcN + srcGap * (srcN - 1);
+    var srcTop = blockTop(srcStackH);
     var srcBox = [];                                     // remember positions for connectors
     for (var si = 0; si < srcN; si++) {
-      var sy = topY + si * (srcCardH + srcGap);
+      var sy = srcTop + si * (srcCardH + srcGap);
       var sa = ease(clamp((t - si * 0.5) / 0.9, 0, 1));  // staggered fade-in over phase 1
       srcBox.push({ x: col[0].x, y: sy, w: col[0].w, h: srcCardH, cx: col[0].x + col[0].w, cy: sy + srcCardH / 2 });
       if (sa <= 0.001) continue;
@@ -1225,7 +1238,26 @@
 
     // panel frame
     var panel = col[1];
-    var panelTop = topY, panelBot = botY;
+    // lay out the 7 groups vertically inside the panel. Each group is a header
+    // line plus a wrapped grid of chips. Heights are proportional to row count.
+    var innerX = panel.x + 7, innerW = panel.w - 14;
+    var perRow = narrow ? 8 : (innerW > 250 ? 6 : 5);   // chips per row
+    // precompute rows per group and total vertical units
+    var rowsArr = PIPE.groups.map(function (g) { return Math.ceil(g.chips.length / perRow); });
+    var headerH = 13, chipH = narrow ? 9 : 15, chipGap = 3, groupGap = narrow ? 8 : 9;
+    // compute total height needed; scale chipH down if it overflows
+    function groupHeight(rows) { return headerH + rows * (chipH + chipGap); }
+    var totalH = 0; rowsArr.forEach(function (r) { totalH += groupHeight(r); });
+    totalH += groupGap * (gpsN - 1);
+    // size the panel to a shared target height so all four columns balance, then
+    // center the panel on the shared midline. The chip content sits centered
+    // inside via symmetric vertical padding (chips are never scaled up).
+    var bandH = botY - topY;
+    var panelH = Math.min(bandH, Math.max(totalH + 24, contentH));
+    var panelPadY = Math.max(12, (panelH - totalH) / 2);
+    var panelTop = blockTop(panelH), panelBot = panelTop + panelH;
+    var avail = panelH - 24;
+    var scaleY = totalH > avail ? avail / totalH : 1;
     var panelAppear = ease(clamp((t - (P1 - 0.4)) / 0.6, 0, 1));
     if (panelAppear > 0.001) {
       ctx.globalAlpha = 0.5 * panelAppear;
@@ -1233,21 +1265,8 @@
       rrect(panel.x + 0.5, panelTop + 0.5, panel.w - 1, panelBot - panelTop - 1, 8); ctx.stroke();
       ctx.globalAlpha = 1;
     }
-
-    // lay out the 7 groups vertically inside the panel. Each group is a header
-    // line plus a wrapped grid of chips. Heights are proportional to row count.
-    var innerX = panel.x + 7, innerW = panel.w - 14;
-    var perRow = narrow ? 8 : (innerW > 250 ? 6 : 5);   // chips per row
-    // precompute rows per group and total vertical units
-    var rowsArr = PIPE.groups.map(function (g) { return Math.ceil(g.chips.length / perRow); });
-    var headerH = 13, chipH = narrow ? 9 : 15, chipGap = 3, groupGap = narrow ? 8 : 7;
-    // compute total height needed; scale chipH down if it overflows
-    function groupHeight(rows) { return headerH + rows * (chipH + chipGap); }
-    var totalH = 0; rowsArr.forEach(function (r) { totalH += groupHeight(r); });
-    totalH += groupGap * (gpsN - 1);
-    var avail = panelBot - panelTop - 12;
-    var scaleY = totalH > avail ? avail / totalH : 1;
-    var gy = panelTop + 6;
+    // top of the first group: content centered inside the panel padding
+    var gy = panelTop + panelPadY;
     var chipCenters = [];                                // remember a representative point per group for connectors
     for (var gi2 = 0; gi2 < gpsN; gi2++) {
       var g = PIPE.groups[gi2];
@@ -1307,10 +1326,11 @@
       }
     }
 
-    // running counter, top-right corner of the panel
+    // running counter, just above the panel's top-right corner
     if (t >= P1 - 0.3) {
       ctx.font = MONO; ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('inputs: ' + countN + ' / 46', panel.x + panel.w, panelTop - 3 < 8 ? 10 : panelTop + 9);
+      var cntY = panelTop - 7 < topY + 9 ? panelTop + 11 : panelTop - 7;
+      ctx.fillText('inputs: ' + countN + ' / 46', panel.x + panel.w, cntY);
       ctx.textAlign = 'left';
     }
 
@@ -1322,10 +1342,20 @@
     var labels = ['P5', 'P25', 'P50', 'P75', 'P95'];
     var mN = labels.length;
     var mAppear = ease(clamp((t - P2) / 1.0, 0, 1));     // cards fade in at start of phase 3
-    // models stack occupies the upper ~62% of the column; multiplier + tally below
-    var mTop = topY + 18, mStackBot = topY + (botY - topY) * 0.60;
-    var mCardH = Math.min(34, (mStackBot - mTop - (mN - 1) * 9) / mN);
-    var mGap = (mStackBot - mTop - mCardH * mN) / (mN - 1);
+    // The whole column-3 group (5 cards + sublabel + x34 badge + tally) fills the
+    // shared content height and is centered on the midline.
+    var subGap = 18;          // stack bottom -> sublabel baseline
+    var badgeGap = 22;        // sublabel -> badge center
+    var tally1Gap = 30;       // badge center -> "N model runs"
+    var tally2Gap = 14;       // -> "per forecast hour"
+    var mExtras = subGap + badgeGap + tally1Gap + tally2Gap;
+    var mGap = 12;
+    var mStackH = contentH - mExtras;
+    var mCardH = Math.min(40, (mStackH - mGap * (mN - 1)) / mN);
+    mStackH = mCardH * mN + mGap * (mN - 1);
+    var mGroupH = mStackH + mExtras;
+    var mTop = blockTop(mGroupH);
+    var mStackBot = mTop + mStackH;
     var mBox = [];
     for (var mi = 0; mi < mN; mi++) {
       var my = mTop + mi * (mCardH + mGap);
@@ -1379,13 +1409,13 @@
       ctx.fillStyle = C.faint; ctx.font = '9px Lora, Georgia, serif';
       ctx.textAlign = 'center';
       wrapMono(ctx, 'five quantile regressors, each a stack of trees',
-        mcol.cx, mStackBot + 14, mcol.w + 8, 11, true);
+        mcol.cx, mStackBot + subGap, mcol.w + 8, 11, true);
       ctx.font = MONO; ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
-    // multiplier badge + tally, lower part of the column
+    // multiplier badge + tally, lower part of the centered group
     var badgeAppear = ease(clamp((t - (P2 + 1.4)) / 0.9, 0, 1));
     if (badgeAppear > 0.001) {
-      var bgy = mStackBot + 34;
+      var bgy = mStackBot + subGap + badgeGap;
       ctx.globalAlpha = badgeAppear;
       var btxt = 'x 34 weather futures';
       ctx.font = MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1404,9 +1434,9 @@
       var tally = Math.round(170 * tallyP);
       ctx.globalAlpha = ease(clamp((t - (P2 + 1.8)) / 0.6, 0, 1));
       ctx.fillStyle = C.ink; ctx.font = MONO; ctx.textAlign = 'center';
-      ctx.fillText(tally + ' model runs', mcol.cx, bgy + 30);
+      ctx.fillText(tally + ' model runs', mcol.cx, bgy + tally1Gap);
       ctx.fillStyle = C.muted;
-      ctx.fillText('per forecast hour', mcol.cx, bgy + 44);
+      ctx.fillText('per forecast hour', mcol.cx, bgy + tally1Gap + tally2Gap);
       ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
 
@@ -1415,21 +1445,30 @@
     // =====================================================================
     var fcol = col[3];
     var fAppear = ease(clamp((t - P3) / (P4 - P3) * 1.05, 0, 1));   // draw-out 0..1
-    // funnel from model stack into the forecast fan
+    // The fan group (band box + two-line caption) fills the shared content height
+    // and is centered on the midline. The band is centered inside its own box.
+    var captionGap = 20, captionH = 22;                  // ~2 caption lines
+    var fanBoxH = Math.min(230, contentH - captionGap - captionH);
+    var fGroupH = fanBoxH + captionGap + captionH;
+    var fpadT = blockTop(fGroupH);
+    var fpadB = fpadT + fanBoxH;
+    var fMidY = (fpadT + fpadB) / 2;
+    // funnel from model stack into the forecast fan, entering at the band center
     if (t >= P3 - 0.2) {
       var mMid = { x: mcol.x + mcol.w, y: (mTop + mStackBot) / 2 };
-      var fMid = { x: fcol.x, y: (topY + botY) * 0.5 };
+      var fMid = { x: fcol.x, y: fMidY };
       var conLit = clamp((t - P3) / 1.2, 0, 1);
       connect(mMid.x, mMid.y, fMid.x, fMid.y, (t < P3 + 1.2) ? conLit : 1, fAppear);
     }
     if (fAppear > 0.001) {
       // mini fan: reuse the a-fan approach at small scale inside the forecast column
-      var fpadT = topY + 60, fpadB = botY - 70;
       var fx0 = fcol.x + 4, fx1 = fcol.x + fcol.w - 4;
       var fih = fpadB - fpadT;
       var fX = function (x) { return fx0 + x * (fx1 - fx0); };
       var fY = function (v) { return fpadB - v * fih; };   // v in 0..1 (band space)
-      var med = function (x) { return 0.62 - 0.34 * x + 0.06 * Math.sin(x * 4.6 + 0.6); };
+      // median centered in the box (v ~ 0.5), drooping gently rightward; band is
+      // symmetric about it so the whole fan reads centered.
+      var med = function (x) { return 0.56 - 0.12 * x + 0.05 * Math.sin(x * 4.6 + 0.6); };
       var hw = function (x) { return 0.04 + 0.30 * Math.pow(x, 1.1); };
       var hwi = function (x) { return hw(x) * 0.5; };
       var Np = 60, up = [], lo = [], ui = [], li = [], mid = [];
@@ -1446,10 +1485,11 @@
       dot(ctx, fX(0), fY(med(0)), 3.5, C.ink);
       ctx.fillStyle = C.muted; ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.fillText('now', fX(0) + 6, fY(med(0)) - 8);
-      // edge labels once drawn
+      // edge labels once drawn, in the reserved gutter, flush to the band ends
       if (fAppear > 0.9) {
         ctx.globalAlpha = ease((fAppear - 0.9) / 0.1);
-        var fxr = fx1 + 3;
+        ctx.textAlign = 'left';
+        var fxr = fx1 + 5;
         ctx.fillStyle = C.faint; ctx.fillText('P95', fxr, fY(med(1) + hw(1)) + 3);
         ctx.fillStyle = C.accent; ctx.fillText('P50', fxr, fY(med(1)) + 3);
         ctx.fillStyle = C.faint; ctx.fillText('P5', fxr, fY(med(1) - hw(1)) + 3);
@@ -1459,7 +1499,7 @@
       ctx.globalAlpha = ease(clamp((t - P3 - 0.5) / 0.8, 0, 1));
       ctx.fillStyle = C.faint; ctx.font = '9px Lora, Georgia, serif'; ctx.textAlign = 'center';
       wrapMono(ctx, 'one hourly forecast, bands calibrated on nine seasons',
-        (fx0 + fx1) / 2, fpadB + 18, fcol.w + 8, 11, true);
+        (fx0 + fx1) / 2, fpadB + captionGap, fcol.w + 8, 11, true);
       ctx.font = MONO; ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
 
