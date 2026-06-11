@@ -1,6 +1,6 @@
 /* Buoycast visual system. DeepMind-publication aesthetic: vast white space,
    immaculate type, one accent (#1257a0), quiet scroll-reveal as the only motion.
-   Fonts: Lora (display/serif) + IBM Plex Mono (data labels). */
+   Font: Lora everywhere; data aligns via tabular figures. */
 
 :root {
   --bg: #ffffff;
@@ -13,9 +13,11 @@
   --accent: #1257a0;      /* the only saturated color */
   --accent-soft: #eef3fa;
   --amber: #b45309;       /* reserved for chart series only */
+  /* one family everywhere; labels differentiate by size, weight, spacing,
+     and numbers stay aligned via tabular figures */
   --serif: 'Lora', Georgia, 'Times New Roman', serif;
   --sans: 'Lora', Georgia, serif;
-  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --mono: 'Lora', Georgia, serif;
   --maxw: 1140px;
   --gutter: clamp(1.25rem, 5vw, 3rem);
 }
@@ -77,27 +79,53 @@ body {
 }
 .nav__brand::before {
   content: "";
-  width: 9px; height: 9px;
+  width: 14px; height: 14px;
   background: var(--accent);
-  border-radius: 2px;
+  border-radius: 3px;
   display: inline-block;
 }
-.nav__links {
+
+/* floating pill nav: the soft highlight slides between items on hover and
+   glides home to the current page on leave */
+.pill {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 1.9rem;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 5px;
+  box-shadow: 0 1px 6px rgba(20, 24, 30, 0.05);
 }
-.nav__links a {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.pill a {
+  position: relative;
+  z-index: 1;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  padding: 0.42rem 1rem;
   color: var(--muted);
   text-decoration: none;
+  border-radius: 9px;
   transition: color 0.18s ease;
+  white-space: nowrap;
 }
-.nav__links a:hover { color: var(--accent); }
-.nav__links a[aria-current="page"] { color: var(--accent); }
+.pill a:hover { color: var(--ink); }
+.pill a[aria-current="page"] { color: var(--ink); font-weight: 500; }
+.pill__hl {
+  position: absolute;
+  top: 5px; bottom: 5px; left: 0;
+  width: 0;
+  background: #f2f1ef;
+  border-radius: 9px;
+  transition: transform 0.24s cubic-bezier(0.3, 0.9, 0.35, 1),
+              width 0.24s cubic-bezier(0.3, 0.9, 0.35, 1);
+  will-change: transform, width;
+}
+
+/* numbers everywhere align in columns even in the serif */
+b, td, th, .count, .hero__big {
+  font-variant-numeric: lining-nums tabular-nums;
+}
 
 /* =========================================================
    Layout container
@@ -426,7 +454,8 @@ canvas { width: 100%; display: block; }
    ========================================================= */
 @media (max-width: 720px) {
   body { font-size: 15px; }
-  .nav__links a:not(.nav__primary) { display: none; }
+  .nav__brand { font-size: 0; gap: 0; }  /* square only; the pill carries the nav */
+  .pill a { padding: 0.42rem 0.7rem; font-size: 0.88rem; }
   .duo { grid-template-columns: 1fr; }
   .digest { grid-template-columns: repeat(4, 1fr); }
   .digest__day:nth-child(4n + 1) { border-left: none; }

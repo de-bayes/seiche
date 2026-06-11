@@ -15,7 +15,7 @@
      sizing handles the bitmap; we re-run the frame at the stored final time).
 
    Robustness note (a real bug): the bitmap is re-measured and re-sized on EVERY
-   frame, never cached across frames. IBM Plex loads async and reflows the
+   frame, never cached across frames. Lora loads async and reflows the
    layout, so a once-measured canvas would stretch. Self-healing each frame
    fixes the giant/blurry/blank classes of bug. */
 (function () {
@@ -28,7 +28,7 @@
     member: 'rgba(120,130,142,0.7)', amber: '#b45309', green: '#2f7d5b',
     dot: 'rgba(20,24,30,0.45)', truth: 'rgba(20,24,30,0.24)'
   };
-  var MONO = '11px "IBM Plex Mono", ui-monospace, Menlo, monospace';
+  var MONO = '11px Lora, Georgia, serif';
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ease(p) { p = clamp(p, 0, 1); return 1 - Math.pow(1 - p, 3); }       // easeOutCubic, for draws
@@ -1196,7 +1196,7 @@
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.font = MONO; ctx.fillStyle = C.ink;
       ctx.fillText(fitMono(ctx, PIPE.sources[si].title, col[0].w - 14), col[0].x + 8, sy + 18);
-      ctx.fillStyle = C.muted; ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.fillStyle = C.muted; ctx.font = '9px Lora, Georgia, serif';
       wrapMono(ctx, PIPE.sources[si].sub, col[0].x + 8, sy + 32, col[0].w - 14, 11);
       ctx.font = MONO;
       ctx.globalAlpha = 1;
@@ -1259,7 +1259,7 @@
       if (la2 > 0.001) {
         ctx.globalAlpha = la2;
         // header in faint caps
-        ctx.fillStyle = C.faint; ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = C.faint; ctx.font = '9px Lora, Georgia, serif';
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
         ctx.fillText(g.name + ' (' + g.chips.length + ')', innerX, gy + 9 * scaleY + 1);
         // chips
@@ -1282,7 +1282,7 @@
             rrect(chx, chy, chipW, thisChipH, 3); ctx.fill();
             ctx.strokeStyle = 'rgba(18,87,160,0.32)'; ctx.lineWidth = 1;
             rrect(chx + 0.5, chy + 0.5, chipW - 1, thisChipH - 1, 3); ctx.stroke();
-            ctx.fillStyle = C.muted; ctx.font = '9px "IBM Plex Mono", monospace';
+            ctx.fillStyle = C.muted; ctx.font = '9px Lora, Georgia, serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(fitMono(ctx, g.chips[k], chipW - 4), chx + chipW / 2, chy + thisChipH / 2 + 0.5);
             ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
@@ -1376,7 +1376,7 @@
       }
       // sublabel under the stack
       ctx.globalAlpha = ease(clamp((t - P2 - 0.4) / 0.8, 0, 1));
-      ctx.fillStyle = C.faint; ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.fillStyle = C.faint; ctx.font = '9px Lora, Georgia, serif';
       ctx.textAlign = 'center';
       wrapMono(ctx, 'five quantile regressors, each a stack of trees',
         mcol.cx, mStackBot + 14, mcol.w + 8, 11, true);
@@ -1457,7 +1457,7 @@
       }
       // caption under the fan
       ctx.globalAlpha = ease(clamp((t - P3 - 0.5) / 0.8, 0, 1));
-      ctx.fillStyle = C.faint; ctx.font = '9px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+      ctx.fillStyle = C.faint; ctx.font = '9px Lora, Georgia, serif'; ctx.textAlign = 'center';
       wrapMono(ctx, 'one hourly forecast, bands calibrated on nine seasons',
         (fx0 + fx1) / 2, fpadB + 18, fcol.w + 8, 11, true);
       ctx.font = MONO; ctx.textAlign = 'left'; ctx.globalAlpha = 1;
