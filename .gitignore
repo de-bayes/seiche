@@ -3,3 +3,5 @@ models/
 forecast.json
 __pycache__/
 .DS_Store
+.vercel/
+.vercel

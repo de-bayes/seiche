@@ -1,0 +1,13 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/data.json", "destination": "https://34.172.202.78.sslip.io/data.json" },
+    { "source": "/stats.json", "destination": "https://34.172.202.78.sslip.io/stats.json" }
+  ],
+  "headers": [
+    {
+      "source": "/(data|stats).json",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=60" }]
+    }
+  ]
+}

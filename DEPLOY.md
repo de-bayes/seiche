@@ -1,5 +1,24 @@
 # Deploying buoycast
 
+## Current deployment (live since 2026-06-11)
+
+- **Site**: https://buoycast.vercel.app (Vercel project `buoycast`, static deploy
+  of `site/`; `buoycast.mccomb.ca` attached, waiting on a GoDaddy A record
+  `buoycast -> 76.76.21.21`). Deploy with `cd site && vercel deploy --prod --yes`
+  (must run from `site/`, not the repo root).
+- **Worker**: GCE VM `buoycast`, zone `us-central1-a`, e2-micro free tier,
+  IP 34.172.202.78, 4GB swap. Publishes hourly at :08, retrains Sundays
+  09:30 UTC (systemd timers). Code lives in /opt/buoycast; update by scp'ing
+  a tarball (repo is private, the VM has no git auth).
+- **Data path**: browser -> Vercel -> rewrite proxy -> Caddy on the VM at
+  https://34.172.202.78.sslip.io (Let's Encrypt via sslip.io, since Vercel
+  rewrites require an https origin). `site/.vercelignore` excludes
+  data.json/stats.json from deploys so the proxy, not a stale static copy,
+  serves them.
+- **Version pin**: scikit-learn==1.8.0 everywhere; the VM loads model pickles
+  trained on this machine and minor-version drift breaks unpickling.
+- **Cost**: $0/month (free-tier VM, Vercel hobby, keyless APIs).
+
 The system is two independent halves:
 
 1. **The worker** (any small Linux VM): fetches buoy + weather data, runs the
