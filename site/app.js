@@ -10,7 +10,7 @@
     member: 'rgba(120,130,142,0.22)', cross: 'rgba(20,24,30,0.38)', accentSoft: 'rgba(18,87,160,0.07)',
     tipBg: 'rgba(255,255,255,0.97)', tipBorder: 'rgba(20,24,30,0.18)',
   };
-  var MONO = 'Lora, Georgia, serif';
+  var MONO = '"IBM Plex Mono", Menlo, monospace';
 
   function chart(canvas, opts) {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);

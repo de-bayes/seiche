@@ -7,11 +7,11 @@
   <meta name="description" content="Hourly probabilistic water temperature forecasts to 7 days for the Evanston-Wilmette lakefront: quantile gradient boosting on buoy + reanalysis + forecast weather, fully validated.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=8">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=11">
   <meta name="theme-color" content="#ffffff">
 </head>
-<body>
+<body class="ms-page">
   <header class="nav" id="nav">
     <div class="nav__inner">
       <a class="nav__brand" href="/">Buoycast</a>
@@ -22,22 +22,33 @@
     </div>
   </header>
 
+  <div class="ms-ruler" id="ms-ruler" aria-hidden="true">
+    <div class="ms-ruler__ticks" id="ms-ruler-ticks"></div>
+    <div class="ms-ruler__labels" id="ms-ruler-labels"></div>
+    <div class="ms-ruler__cursor" id="ms-ruler-cursor"><span class="ms-ruler__frac" id="ms-ruler-frac">0.00</span></div>
+  </div>
+
   <main>
     <div class="wrap">
-      <section class="hero reveal">
-        <p class="hero__kicker">Evanston&ndash;Wilmette lakefront &middot; Wilmette buoy 45174 &middot; live</p>
-        <h1 class="hero__title">The next 168 hours</h1>
-        <p class="hero__lede">Lake Michigan surface temperature, forecast hour by hour to seven days. The dark line is the median of 34 simulated futures; the band around it is calibrated on nine seasons of out-of-sample misses, so it means what it says.</p>
-        <div class="figure">
-          <p class="subhead">Hourly forecast &middot; P5 / P25 / P50 / P75 / P95</p>
-          <canvas id="fan" height="380"></canvas>
-        </div>
-        <p class="caption">Hover anywhere for the exact numbers at that hour. The faint plume is the forecast run across 34 weather futures (NOAA's 31-member GEFS ensemble plus the European, German, and Canadian models); the band, calibrated on nine seasons, widens only when those futures genuinely disagree. The inner band should hold the outcome half the time, the outer band 90 percent of the time.</p>
+      <section class="hero reveal" id="sec-fan">
+        <header class="ms-masthead">
+          <p class="ms-crumb"><a href="/">Buoycast</a> <span>/</span> Live forecast</p>
+          <p class="ms-meta"><span id="stamp">reading the buoy&hellip;</span> &middot; Wilmette buoy 45174</p>
+          <h1 class="ms-title">The next 168 hours.</h1>
+          <p class="ms-sub">Lake Michigan surface temperature, forecast hour by hour to seven days, with a band that has earned the right to be believed.</p>
+        </header>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <p class="subhead">Hourly forecast &middot; P5 / P25 / P50 / P75 / P95</p>
+            <canvas id="fan" height="380"></canvas>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 1.</span> The live forecast: 34 simulated futures (NOAA's 31-member GEFS ensemble plus the European, German, and Canadian models), their median in dark blue, the calibrated band around them. Inner band holds half the outcomes, outer band 90 percent. Hover for exact numbers.</span></figcaption>
+        </figure>
       </section>
     </div>
 
     <div class="wrap">
-      <section class="section section--first reveal">
+      <section class="section section--first reveal" id="sec-now">
         <div class="section__head">
           <span class="section__num">01</span>
           <h2 class="section__title">In the water right now</h2>
@@ -47,7 +58,7 @@
         <p class="caption">Observed by the buoy, ten-minute cadence in season. Every forecast above starts from this reading: the model is pinned to reality at hour one and earns its keep from there.</p>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-week">
         <div class="section__head">
           <span class="section__num">02</span>
           <h2 class="section__title">Seven days at a glance</h2>
@@ -59,7 +70,7 @@
     </div>
 
     <div class="wrap">
-      <section class="station reveal" aria-label="The station at a glance">
+      <section class="station reveal" id="sec-station" aria-label="The station at a glance">
         <div class="station__grid">
           <figure class="cell cell--map">
             <img src="/assets/locator.png" alt="Satellite surface-temperature field around the buoy, the station marked with a white ring">
@@ -100,16 +111,20 @@
 
     <div class="wrap">
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-skill">
         <div class="section__head">
           <span class="section__num">03</span>
           <h2 class="section__title">Skill by lead time</h2>
-          <p class="caption caption--tight">Left: median forecast error against "the water stays exactly as it is now." Right: how often the 90 percent (cyan) and 50 percent (yellow) bands actually contained the outcome on the held-out test; dashed lines mark perfect calibration. Bands run a touch narrow at two to three day leads and the 50 percent band degrades past day five: known, quantified, shown.</p>
         </div>
-        <div class="duo">
-          <div><h3>Median absolute error vs persistence (&deg;F)</h3><canvas id="skill" height="260"></canvas></div>
-          <div><h3>Band calibration: nominal vs observed coverage</h3><canvas id="coverage" height="260"></canvas></div>
-        </div>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <div class="duo">
+              <div><h3>Median absolute error vs persistence (&deg;F)</h3><canvas id="skill" height="260"></canvas></div>
+              <div><h3>Band calibration: nominal vs observed coverage</h3><canvas id="coverage" height="260"></canvas></div>
+            </div>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 2.</span> Left: median forecast error against "the water stays exactly as it is now." Right: how often the 90 percent (cyan) and 50 percent (yellow) bands actually contained the outcome on the held-out test; dashed lines mark perfect calibration. Bands run a touch narrow at two to three day leads and the 50 percent band degrades past day five: known, quantified, shown.</span></figcaption>
+        </figure>
       </section>
 
       <section class="section reveal" id="backtest-card" hidden>
@@ -117,25 +132,27 @@
           <span class="section__num">04</span>
           <h2 class="section__title">Multi-season rolling backtest</h2>
         </div>
-        <div class="figure">
-          <canvas id="backtest-chart" height="320"></canvas>
-        </div>
-        <p class="caption" id="backtest-cap"></p>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame"><canvas id="backtest-chart" height="320"></canvas></div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 3.</span> <span id="backtest-cap"></span></span></figcaption>
+        </figure>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-replay">
         <div class="section__head">
           <span class="section__num">05</span>
           <h2 class="section__title">Replayed over the test weeks</h2>
         </div>
-        <div class="figure">
-          <p class="subhead">+24h forecasts replayed across the held-out window</p>
-          <canvas id="hindcast" height="260"></canvas>
-        </div>
-        <p class="caption">Every hour of the held-out test window: what the +24h median (cyan) and 90 percent band said, against what the water actually did (dark line). The model never saw any of this during training.</p>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <p class="subhead">+24h forecasts replayed across the held-out window</p>
+            <canvas id="hindcast" height="260"></canvas>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 4.</span> Every hour of the held-out test window: what the +24h median (cyan) and 90 percent band said, against what the water actually did (dark line). The model never saw any of this during training.</span></figcaption>
+        </figure>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-hood">
         <div class="section__head">
           <span class="section__num">06</span>
           <h2 class="section__title">Under the hood</h2>
@@ -144,55 +161,67 @@
 
         <div class="block">
           <h3 class="block__title">Error structure at +24h</h3>
-          <div class="duo">
-            <div><h3>Residual distribution (&deg;F)</h3><canvas id="residuals" height="240"></canvas></div>
-            <div><h3>Predicted vs actual (&deg;F)</h3><canvas id="scatter" height="240"></canvas></div>
+          <div class="ml-fig__frame">
+            <div class="duo">
+              <div><h3>Residual distribution (&deg;F)</h3><canvas id="residuals" height="240"></canvas></div>
+              <div><h3>Predicted vs actual (&deg;F)</h3><canvas id="scatter" height="240"></canvas></div>
+            </div>
           </div>
         </div>
 
         <div class="block">
           <h3 class="block__title">What the model leans on</h3>
-          <div class="figure">
-            <p class="subhead">Permutation importance, test set</p>
-            <canvas id="importance" height="280"></canvas>
-          </div>
-          <p class="caption">Increase in error when a feature is shuffled (&deg;F). The current water temperature and its recent lags anchor the level; forecast-window air temperature, wind, and solar move it. The fut_ features come from the weather forecast, the rest from the buoy itself.</p>
+          <figure class="ml-fig">
+            <div class="ml-fig__frame">
+              <p class="subhead">Permutation importance, test set</p>
+              <canvas id="importance" height="280"></canvas>
+            </div>
+            <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 5.</span> Increase in error when a feature is shuffled (&deg;F). The current water temperature and its recent lags anchor the level; forecast-window air temperature, wind, and solar move it. The fut_ features come from the weather forecast, the rest from the buoy itself.</span></figcaption>
+          </figure>
         </div>
 
         <div class="block">
           <h3 class="block__title">Full validation table</h3>
-          <div class="figure">
-            <div class="tablewrap"><table id="stat-table"></table></div>
-          </div>
-          <p class="caption">All numbers in &deg;F on the gap-separated test window. Bias is mean signed error. P90 |err| is the 90th percentile of absolute error, the bad-day number. Width is the average 90 percent band span.</p>
+          <figure class="ml-fig">
+            <div class="ml-fig__frame">
+              <div class="tablewrap"><table id="stat-table"></table></div>
+            </div>
+            <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 6.</span> All numbers in &deg;F on the gap-separated test window. Bias is mean signed error. P90 |err| is the 90th percentile of absolute error, the bad-day number. Width is the average 90 percent band span.</span></figcaption>
+          </figure>
         </div>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-drivers">
         <div class="section__head">
           <span class="section__num">07</span>
           <h2 class="section__title">Why it works: the driver study</h2>
-          <p class="caption caption--tight">Hover either panel. Weather during the forecast window (cyan) carries two to four times the signal of the buoy's own past (gray): air-water temperature gap, sustained wind (mixing), solar input, and the alongshore wind that drives upwelling. The longer the window, the stronger the correlation: it is sustained conditions, not snapshots, that move the water.</p>
         </div>
-        <div class="duo">
-          <div><h3>Signal lives in the forecast window (|corr| with next-24h change)</h3><canvas id="driver-bars" height="280"></canvas></div>
-          <div><h3>Sustained conditions beat snapshots (|corr| vs window length)</h3><canvas id="driver-sweep" height="280"></canvas></div>
-        </div>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <div class="duo">
+              <div><h3>Signal lives in the forecast window (|corr| with next-24h change)</h3><canvas id="driver-bars" height="280"></canvas></div>
+              <div><h3>Sustained conditions beat snapshots (|corr| vs window length)</h3><canvas id="driver-sweep" height="280"></canvas></div>
+            </div>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 7.</span> Hover either panel. Weather during the forecast window (cyan) carries two to four times the signal of the buoy's own past (gray): air-water temperature gap, sustained wind (mixing), solar input, and the alongshore wind that drives upwelling. The longer the window, the stronger the correlation: it is sustained conditions, not snapshots, that move the water.</span></figcaption>
+        </figure>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-band">
         <div class="section__head">
           <span class="section__num">08</span>
           <h2 class="section__title">Anatomy of the uncertainty</h2>
         </div>
-        <div class="figure">
-          <p class="subhead">Where this forecast's band comes from</p>
-          <canvas id="uncertainty" height="280"></canvas>
-        </div>
-        <p class="caption">The current band split into its two independent parts (90 percent half-widths, &deg;F): the irreducible error the model carries even under perfect weather (gray, from the nine-season backtest) and the part from the four weather models disagreeing (cyan). They add in quadrature to the band on the fan chart above. Near term, almost all the uncertainty is irreducible; only further out does weather-model divergence start to matter. Hover for the split at any lead.</p>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <p class="subhead">Where this forecast's band comes from</p>
+            <canvas id="uncertainty" height="280"></canvas>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig 8.</span> The current band split into its two independent parts (90 percent half-widths, &deg;F): the irreducible error the model carries even under perfect weather (gray, from the nine-season backtest) and the part from the four weather models disagreeing (cyan). They add in quadrature to the band on the fan chart above. Near term, almost all the uncertainty is irreducible; only further out does weather-model divergence start to matter. Hover for the split at any lead.</span></figcaption>
+        </figure>
       </section>
 
-      <section class="section reveal">
+      <section class="section reveal" id="sec-method">
         <div class="section__head">
           <span class="section__num">09</span>
           <h2 class="section__title">Methodology</h2>
@@ -217,7 +246,7 @@
 
   <footer class="foot">
     <div class="foot__inner">
-      <p>Open data: NOAA NDBC, ERA5 (Copernicus), GFS/HRRR via Open-Meteo. The buoy is seasonal, roughly May to November. Not an official product; for safety decisions use NWS Chicago. <span id="stamp">loading&hellip;</span><br><span class="foot__credit">Built by <a href="https://mccomb.ca">Ryan McComb</a></span></p>
+      <p>Open data: NOAA NDBC, ERA5 (Copernicus), GFS/HRRR via Open-Meteo. The buoy is seasonal, roughly May to November. Not an official product; for safety decisions use NWS Chicago.<br><span class="foot__credit">Built by <a href="https://mccomb.ca">Ryan McComb</a></span></p>
       <nav class="foot__nav">
         <a href="/">Forecast</a>
         <a href="/ml">ML explainer</a>
@@ -246,7 +275,16 @@
       }
     })();
   </script>
+  <script>
+    window.MS_SECTIONS = [
+      ['sec-fan', 'FAN'], ['sec-now', 'NOW'], ['sec-week', 'WEEK'],
+      ['sec-station', 'STATION'], ['sec-skill', 'SKILL'], ['backtest-card', 'BACKTEST'],
+      ['sec-replay', 'REPLAY'], ['sec-hood', 'HOOD'], ['sec-drivers', 'DRIVERS'],
+      ['sec-band', 'BAND'], ['sec-method', 'METHOD']
+    ];
+  </script>
   <script src="/nav.js?v=1"></script>
-  <script src="/app.js?v=6"></script>
+  <script src="/ruler.js?v=1"></script>
+  <script src="/app.js?v=7"></script>
 </body>
 </html>

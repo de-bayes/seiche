@@ -581,93 +581,7 @@ canvas { width: 100%; display: block; }
 /* =========================================================
    /ml explainer page
    ========================================================= */
-.ml-hero {
-  padding: clamp(3.5rem, 9vw, 6.5rem) 0 clamp(2rem, 5vw, 3.5rem);
-  max-width: 46rem;
-}
-.ml-hero__kicker {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 1rem;
-}
-.ml-hero h1 {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(2.3rem, 5vw, 3.4rem);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  margin: 0 0 1.1rem;
-}
-.ml-hero p {
-  font-size: clamp(1.05rem, 2vw, 1.2rem);
-  line-height: 1.6;
-  color: var(--muted);
-  margin: 0;
-}
-
-.ml-step {
-  padding: clamp(3.5rem, 8vw, 7rem) 0 0;
-  display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: clamp(2.5rem, 5vw, 4rem);
-  align-items: center;
-}
-.ml-step__text .num {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.ml-step__text h2 {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(1.5rem, 3vw, 1.95rem);
-  line-height: 1.18;
-  letter-spacing: -0.015em;
-  margin: 0.6rem 0 1rem;
-}
-.ml-step__text p {
-  font-size: 0.98rem;
-  line-height: 1.7;
-  color: var(--muted);
-  margin: 0 0 0.9rem;
-}
-.ml-step__text p:last-child { margin-bottom: 0; }
-.ml-step__text b { color: var(--ink); font-weight: 600; }
-
-/* full-width "whole machine" section */
-.ml-wide {
-  padding: clamp(3.5rem, 8vw, 7rem) 0 0;
-}
-.ml-wide__head { max-width: 46rem; margin: 0 0 2.2rem; }
-.ml-wide__head .num {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.ml-wide__head h2 {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(1.5rem, 3vw, 1.95rem);
-  line-height: 1.18;
-  letter-spacing: -0.015em;
-  margin: 0.6rem 0 1rem;
-}
-.ml-wide__head p {
-  font-size: 0.98rem;
-  line-height: 1.7;
-  color: var(--muted);
-  margin: 0;
-}
-.ml-wide__head b { color: var(--ink); font-weight: 600; }
-
-/* figure shell */
+/* figure shell (base; the .ms-page restyle below overrides the look) */
 .ml-fig {
   border: 1px solid var(--rule);
   border-radius: 12px;
@@ -722,21 +636,7 @@ canvas { width: 100%; display: block; }
   margin-top: 0.4rem;
 }
 
-/* "where it stands" */
-.ml-next { padding: clamp(3.5rem, 8vw, 7rem) 0 0; }
-.ml-next > h2 {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(1.5rem, 3vw, 1.95rem);
-  letter-spacing: -0.015em;
-  margin: 0 0 0.7rem;
-}
-.ml-next > p {
-  color: var(--muted);
-  font-size: 1.02rem;
-  margin: 0 0 2.2rem;
-  max-width: 46rem;
-}
+/* "where it stands" cards (base; the .ms-page restyle overrides the look) */
 .next-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -804,7 +704,416 @@ canvas { width: 100%; display: block; }
 .ml-table td.win { color: var(--accent); font-weight: 600; }
 .ml-table td.tie { color: var(--faint); }
 
-@media (max-width: 720px) {
-  .ml-step { grid-template-columns: 1fr; gap: 1.8rem; }
-  .ml-counters { grid-template-columns: repeat(2, 1fr); gap: 1.4rem; }
+/* =========================================================
+   /ml restyle: "Making Software" technical-manual language.
+   Every selector below is scoped under .ms-page (set on the
+   /ml <body>) so the dashboard index.html is untouched.
+   ========================================================= */
+.ms-page {
+  /* real monospace for labels/breadcrumbs/captions on this page only */
+  --ms-mono: 'IBM Plex Mono', Menlo, 'SF Mono', monospace;
+  --ms-hair: #e3e3e3;        /* hairline figure border */
+  --ms-wash: #fdf3c7;        /* the signature yellow highlighter wash */
 }
+
+/* the article column: a calmer single measure, centered */
+.ms-page .ms-article {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+/* ---- masthead: breadcrumb / meta / centered title + sub ---- */
+.ms-page .ms-masthead {
+  text-align: center;
+  padding: clamp(2.6rem, 7vw, 5rem) 0 clamp(2rem, 5vw, 3.2rem);
+  border-bottom: 1px solid var(--ms-hair);
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+.ms-page .ms-crumb {
+  font-family: var(--ms-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 1.4rem;
+}
+.ms-page .ms-crumb a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.ms-page .ms-crumb a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.ms-page .ms-crumb span { margin: 0 0.5em; color: var(--faint); }
+.ms-page .ms-meta {
+  font-family: var(--ms-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 1.5rem;
+}
+.ms-page .ms-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0 auto 1rem;
+  max-width: 16ch;
+}
+.ms-page .ms-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.02rem, 2.1vw, 1.25rem);
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 auto;
+  max-width: 44ch;
+}
+
+/* ---- section header pattern: mono kicker over serif heading ---- */
+.ms-page .ms-section {
+  padding: clamp(2.8rem, 6vw, 4.5rem) 0 0;
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: clamp(2.2rem, 5vw, 3.6rem);
+  align-items: center;
+}
+.ms-page .ms-section__text { min-width: 0; max-width: 30rem; }
+/* the whole-machine section spans the full article width (not the 2-col grid),
+   so the four-column pipeline canvas is wide enough to show text chips, not dots */
+.ms-page .ms-wide {
+  padding: clamp(3rem, 7vw, 5rem) 0 0;
+}
+.ms-page .ms-wide__head { max-width: 46rem; margin: 0 0 2rem; }
+.ms-page .ms-kicker {
+  font-family: var(--ms-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.55rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+}
+.ms-page .ms-kicker__num {
+  color: var(--accent);
+  font-weight: 500;
+}
+.ms-page .ms-section h2,
+.ms-page .ms-wide h2,
+.ms-page .ms-next h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.45rem, 3vw, 1.95rem);
+  line-height: 1.16;
+  letter-spacing: -0.015em;
+  margin: 0 0 1rem;
+}
+.ms-page .ms-section p,
+.ms-page .ms-wide__head p {
+  font-size: 0.99rem;
+  line-height: 1.72;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+.ms-page .ms-section p:last-child,
+.ms-page .ms-wide__head p:last-child { margin-bottom: 0; }
+
+/* ---- key terms: underlined serif (not bold-only) ---- */
+.ms-page .ms-section p b,
+.ms-page .ms-wide__head p b,
+.ms-page .ms-next p b {
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(22, 24, 29, 0.45);
+  padding-bottom: 0.5px;
+}
+
+/* ---- manual figures: hairline frame, mono caption with yellow wash ---- */
+.ms-page .ml-fig {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+.ms-page .ml-fig__frame {
+  border: 1px solid var(--ms-hair);
+  border-radius: 2px;
+  padding: 1.2rem 1.3rem;
+  background: #fff;
+}
+.ms-page .ml-fig canvas { width: 100%; display: block; }
+.ms-page .ml-fig input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 0.9rem 0 0.1rem;
+}
+.ms-page .ml-fig__cap {
+  font-family: var(--serif);
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  color: var(--muted);
+  margin: 0.8rem 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  line-height: 1.5;
+}
+/* the signature: a soft yellow highlighter behind the caption TEXT only */
+.ms-page .ms-cap {
+  flex: 1;
+  background-image: linear-gradient(var(--ms-wash), var(--ms-wash));
+  background-repeat: no-repeat;
+  background-size: 100% 88%;
+  background-position: 0 90%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0 0.12em;
+}
+.ms-page .ms-cap__n {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ink);
+  margin-right: 0.15em;
+}
+/* tiny mono-caps replay buttons */
+.ms-page .ms-replay {
+  font-family: var(--ms-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--ms-hair);
+  border-radius: 2px;
+  padding: 0.28rem 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: none;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.ms-page .ms-replay:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---- counters in the SYMBOL/FREQUENCY register ---- */
+.ms-page .ml-counters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border: 1px solid var(--ms-hair);
+}
+.ms-page .ml-counters .c {
+  padding: 1.1rem 1.2rem;
+  border-right: 1px solid var(--ms-hair);
+  border-bottom: 1px solid var(--ms-hair);
+}
+.ms-page .ml-counters .c:nth-child(2n) { border-right: none; }
+.ms-page .ml-counters .c:nth-child(n + 3) { border-bottom: none; }
+.ms-page .ml-counters .c b {
+  display: block;
+  font-family: var(--ms-mono);
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.ms-page .ml-counters .c span {
+  font-family: var(--ms-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* ---- scoreboard table: hairline grid, caps mono headers, mono numerals ---- */
+.ms-page .ml-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ms-mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--ms-hair);
+}
+.ms-page .ml-table th {
+  text-align: right;
+  font-weight: 500;
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--ink);
+  background: #fbfbf9;
+}
+.ms-page .ml-table td {
+  text-align: right;
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--ms-hair);
+  border-right: 1px solid #f0f0ee;
+  color: var(--ink);
+}
+.ms-page .ml-table td:last-child, .ms-page .ml-table th:last-child { border-right: none; }
+.ms-page .ml-table tr:last-child td { border-bottom: none; }
+.ms-page .ml-table th:first-child, .ms-page .ml-table td:first-child { text-align: left; color: var(--muted); }
+.ms-page .ml-table td.win { color: var(--accent); font-weight: 500; }
+.ms-page .ml-table td.tie { color: var(--faint); }
+
+/* ---- "where it stands": align to the hairline/mono system ---- */
+.ms-page .ms-next {
+  padding: clamp(3rem, 7vw, 5rem) 0 0;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  border-top: 1px solid var(--ms-hair);
+}
+.ms-page .ms-next > p {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0 0 2rem;
+  max-width: 46rem;
+}
+.ms-page .next-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0;
+  border: 1px solid var(--ms-hair);
+}
+.ms-page .next-card {
+  border: none;
+  border-right: 1px solid var(--ms-hair);
+  border-radius: 0;
+  padding: 1.5rem 1.5rem 1.6rem;
+}
+.ms-page .next-grid .next-card:last-child { border-right: none; }
+.ms-page .next-card .tag {
+  font-family: var(--ms-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.ms-page .next-card h3 {
+  font-family: var(--serif);
+  font-size: 1.14rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.6rem;
+}
+.ms-page .next-card p {
+  font-size: 0.88rem;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0;
+}
+.ms-page .next-card .lift {
+  font-family: var(--ms-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.9rem;
+  display: block;
+}
+
+/* =========================================================
+   The ruler rail (centerpiece): fixed to the right edge,
+   fine ticks, mono section labels, moving cursor + fraction.
+   ========================================================= */
+.ms-ruler {
+  position: fixed;
+  top: 72px;          /* clear the sticky nav */
+  bottom: 24px;
+  right: 0;
+  width: 84px;
+  z-index: 40;
+  pointer-events: none;
+}
+.ms-ruler__ticks {
+  position: absolute;
+  top: 0; bottom: 0;
+  right: 14px;
+  width: 8px;
+}
+.ms-ruler__tick {
+  position: absolute;
+  right: 0;
+  width: 5px;
+  height: 0;
+  border-top: 1px solid rgba(22, 24, 29, 0.22);
+  transform: translateY(-0.5px);
+}
+.ms-ruler__tick.is-major {
+  width: 8px;
+  border-top-color: rgba(22, 24, 29, 0.38);
+}
+.ms-ruler__labels {
+  position: absolute;
+  top: 0; bottom: 0;
+  right: 28px;
+  left: 0;
+}
+.ms-ruler__label {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-family: var(--ms-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--faint);
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: color 0.16s ease;
+}
+.ms-ruler__label:hover { color: var(--accent); }
+.ms-ruler__label.is-active { color: var(--ink); }
+.ms-ruler__cursor {
+  position: absolute;
+  right: 10px;
+  width: 16px;
+  height: 0;
+  border-top: 1.5px solid var(--accent);
+  transform: translateY(-0.75px);
+}
+.ms-ruler__frac {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--ms-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+/* hide the whole rail under 1000px */
+@media (max-width: 999px) {
+  .ms-ruler { display: none; }
+}
+
+/* =========================================================
+   /ml restyle responsive
+   ========================================================= */
+@media (max-width: 720px) {
+  .ms-page .ms-section { grid-template-columns: 1fr; gap: 1.6rem; }
+  .ms-page .ml-counters { grid-template-columns: repeat(2, 1fr); }
+  .ms-page .ml-counters .c:nth-child(n + 3) { border-bottom: 1px solid var(--ms-hair); }
+  .ms-page .ml-counters .c:nth-child(n + 3):nth-last-child(-n + 2) { border-bottom: none; }
+  .ms-page .next-grid { grid-template-columns: 1fr; }
+  .ms-page .next-card { border-right: none; border-bottom: 1px solid var(--ms-hair); }
+  .ms-page .next-grid .next-card:last-child { border-bottom: none; }
+  .ms-page .ml-fig__cap { flex-direction: column; gap: 0.6rem; }
+}
+
+/* dashboard under the Making-Software system: mono sub-labels and numbering */
+.ms-page .subhead, .ms-page .section__num {
+  font-family: var(--ms-mono);
+  letter-spacing: 0.12em;
+}
+.ms-page .ml-fig { margin: 0; }

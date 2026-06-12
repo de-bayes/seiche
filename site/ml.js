@@ -28,7 +28,7 @@
     member: 'rgba(120,130,142,0.7)', amber: '#b45309', green: '#2f7d5b',
     dot: 'rgba(20,24,30,0.45)', truth: 'rgba(20,24,30,0.24)'
   };
-  var MONO = '11px Lora, Georgia, serif';
+  var MONO = '11px "IBM Plex Mono", Menlo, monospace';
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function ease(p) { p = clamp(p, 0, 1); return 1 - Math.pow(1 - p, 3); }       // easeOutCubic, for draws
@@ -174,10 +174,10 @@
     fillBand(ctx, up, lo, C.band);
     poly(ctx, mid, C.accent, 2.2);
 
-    // 'now' dot at left
+    // 'NOW' dot at left
     dot(ctx, m.X(0), m.Y(med(0)), 3.5, C.ink);
     ctx.fillStyle = C.muted; ctx.textAlign = 'left';
-    ctx.fillText('now', m.X(0) + 7, m.Y(med(0)) - 9);
+    ctx.fillText('NOW', m.X(0) + 7, m.Y(med(0)) - 9);
 
     // right-edge labels fade in once the line is fully drawn
     if (p > 0.90) {
@@ -193,8 +193,8 @@
 
     // x labels inside the padding
     ctx.fillStyle = C.faint; ctx.textAlign = 'left';
-    ctx.fillText('+0h', pad.l, s.h - 9);
-    ctx.textAlign = 'right'; ctx.fillText('+7d', s.w - pad.r, s.h - 9);
+    ctx.fillText('+0H', pad.l, s.h - 9);
+    ctx.textAlign = 'right'; ctx.fillText('+7D', s.w - pad.r, s.h - 9);
   }, FAN_DUR);
 
   /* =====================================================================
@@ -293,7 +293,7 @@
       if (label) {
         var trees = Math.round(i0 + f);
         var rmse = BOOST.rmse[i0] + (BOOST.rmse[i1] - BOOST.rmse[i0]) * f;
-        label.textContent = 'trees: ' + trees + ' · error: ' + rmse.toFixed(3);
+        label.textContent = trees + ' trees stacked, error down to ' + rmse.toFixed(3);
       }
     }, growSecs);
 
@@ -471,10 +471,10 @@
       ctx.fillStyle = (isActive && spot > 0.5) ? C.ink : restColor;
       ctx.fillText(txt, xr, yPix);
     }
-    memLabel(0, 'ridge', GRAY1, slotY[0], aRidge);
-    memLabel(1, 'bayes', GRAY1, slotY[1], aBayes);
-    memLabel(2, 'forest', GRAY2, slotY[2], aForest);
-    memLabel(3, 'boosting', BMUTED, slotY[3], aBoost);
+    memLabel(0, 'RIDGE', GRAY1, slotY[0], aRidge);
+    memLabel(1, 'BAYES', GRAY1, slotY[1], aBayes);
+    memLabel(2, 'FOREST', GRAY2, slotY[2], aForest);
+    memLabel(3, 'BOOSTING', BMUTED, slotY[3], aBoost);
     ctx.globalAlpha = 1;
 
     // ---- phase 2: weight bars fade in (real learned weights) ----
@@ -485,10 +485,10 @@
       // each bar so a 0% weight reads as earned, not arbitrary: the linear
       // models are simply the least accurate of the four on unseen data.
       var bars = [
-        { name: 'ridge', w: 0.00, err: '1.29', col: GRAY1 },
-        { name: 'bayes', w: 0.00, err: '1.29', col: GRAY1 },
-        { name: 'forest', w: 0.45, err: '1.19', col: GRAY2 },
-        { name: 'boosting', w: 0.55, err: '1.12', col: BMUTED }
+        { name: 'RIDGE', w: 0.00, err: '1.29', col: GRAY1 },
+        { name: 'BAYES', w: 0.00, err: '1.29', col: GRAY1 },
+        { name: 'FOREST', w: 0.45, err: '1.19', col: GRAY2 },
+        { name: 'BOOSTING', w: 0.55, err: '1.12', col: BMUTED }
       ];
       var bx = m.X(0.04), bw = (m.X(0.42) - bx), bh = 7, bgap = 5;
       var by0 = pad.t + 6;
@@ -506,7 +506,7 @@
         ctx.fillStyle = C.muted; ctx.textAlign = 'left';
         ctx.fillText(bars[bi].name, bx, by - 3);
         ctx.fillStyle = C.faint; ctx.textAlign = 'left';
-        ctx.fillText(Math.round(bars[bi].w * 100) + '% · err ' + bars[bi].err + '°', bx + bw + 8, by + bh - 0.5);
+        ctx.fillText(Math.round(bars[bi].w * 100) + '% · ERR ' + bars[bi].err + '°', bx + bw + 8, by + bh - 0.5);
       }
       ctx.globalAlpha = 1;
     }
@@ -518,7 +518,7 @@
       if (pComposite > 0.97) {
         ctx.globalAlpha = ease((pComposite - 0.97) / 0.03);
         ctx.fillStyle = C.accent; ctx.textAlign = 'left';
-        ctx.fillText('composite', xr, pad.t + 60);
+        ctx.fillText('COMPOSITE', xr, pad.t + 60);
         ctx.globalAlpha = 1;
       }
     }
@@ -602,13 +602,13 @@
 
     dot(ctx, m.X(0), m.Y(OBS), 4, C.ink);
     ctx.textAlign = 'left'; ctx.fillStyle = C.muted;
-    ctx.fillText('buoy now', m.X(0) + 8, m.Y(OBS) + 4);
-    ctx.fillStyle = C.faint; ctx.fillText('raw model', m.X(0) + 8, m.Y(R(0)) - 8);
+    ctx.fillText('BUOY NOW', m.X(0) + 8, m.Y(OBS) + 4);
+    ctx.fillStyle = C.faint; ctx.fillText('RAW MODEL', m.X(0) + 8, m.Y(R(0)) - 8);
 
     // 'anchored' label fades in with the anchored phase, both labels legible at freeze
     if (a > 0.05) {
       ctx.globalAlpha = clamp(a, 0, 1);
-      ctx.fillStyle = C.accent; ctx.fillText('anchored', m.X(0) + 8, m.Y(R(0) + delta) + 14);
+      ctx.fillStyle = C.accent; ctx.fillText('ANCHORED', m.X(0) + 8, m.Y(R(0) + delta) + 14);
       ctx.globalAlpha = 1;
     }
   }, ANCH_DUR);
@@ -653,8 +653,8 @@
 
       // band-width readout at the right edge
       ctx.textAlign = 'left'; var xr = s.w - pad.r + 5;
-      ctx.fillStyle = C.accent; ctx.fillText('mean', xr, m.Y(0.51) + 3);
-      ctx.fillStyle = C.faint; ctx.fillText('band', xr, m.Y(0.51) + 17);
+      ctx.fillStyle = C.accent; ctx.fillText('MEAN', xr, m.Y(0.51) + 3);
+      ctx.fillStyle = C.faint; ctx.fillText('BAND', xr, m.Y(0.51) + 17);
 
       if (label) label.textContent = 'weather-model disagreement: ' + (d < 1 / 3 ? 'low' : d < 2 / 3 ? 'medium' : 'high');
     }
@@ -734,7 +734,7 @@
     ctx.fillStyle = 'rgba(18,87,160,0.13)'; ctx.fillRect(X(0), yt, X(grow) - X(0), bh);
     ctx.strokeStyle = C.accent; ctx.lineWidth = 1.3;
     ctx.strokeRect(X(0) + 0.5, yt + 0.5, Math.max(0, X(grow) - X(0) - 1), bh - 1);
-    ctx.fillStyle = C.accent; ctx.textAlign = 'left'; ctx.fillText('train', X(0) + 6, yt - 9);
+    ctx.fillStyle = C.accent; ctx.textAlign = 'left'; ctx.fillText('TRAIN', X(0) + 6, yt - 9);
 
     // test block fades in after the gap, once training is grown
     if (atEnd || lp > 0.48) {
@@ -744,21 +744,21 @@
       ctx.fillStyle = 'rgba(180,83,9,0.18)'; ctx.fillRect(X(tx), yt, X(tx + testW) - X(tx), bh);
       ctx.strokeStyle = C.amber; ctx.lineWidth = 1.3;
       ctx.strokeRect(X(tx) + 0.5, yt + 0.5, X(tx + testW) - X(tx) - 1, bh - 1);
-      ctx.fillStyle = C.amber; ctx.textAlign = 'center'; ctx.fillText('test', X(tx + testW / 2), yt - 9);
+      ctx.fillStyle = C.amber; ctx.textAlign = 'center'; ctx.fillText('TEST', X(tx + testW / 2), yt - 9);
       ctx.globalAlpha = clamp(alpha, 0, 1);
 
       // green check fades in last
       if (atEnd || lp > 0.66) {
         ctx.globalAlpha = clamp(alpha, 0, 1) * (atEnd ? 1 : ease(clamp((lp - 0.66) / 0.16, 0, 1)));
         ctx.fillStyle = C.green; ctx.textAlign = 'left';
-        ctx.fillText('scored', X(tx + testW) + 8, yt + bh / 2 + 4);
+        ctx.fillText('SCORED', X(tx + testW) + 8, yt + bh / 2 + 4);
         ctx.globalAlpha = clamp(alpha, 0, 1);
       }
     }
 
     ctx.globalAlpha = 1;
     ctx.fillStyle = C.muted; ctx.textAlign = 'right';
-    ctx.fillText('fold ' + (fi + 1) + ' / 9', x1, yt - 9);
+    ctx.fillText('FOLD ' + (fi + 1) + ' / 9', x1, yt - 9);
 
     // centered receipt line, fading in over the last fold and staying on freeze
     var sa = atEnd ? 1 : ease(clamp((t - (WALK_DUR - FOLD_SECS)) / (FOLD_SECS * 0.6), 0, 1));
@@ -819,9 +819,9 @@
       var tgtX = wx + winW + 0.10;
       dot(ctx, X(tgtX), Ys(series(tgtX)), 3.2, C.amber);
       ctx.font = MONO; ctx.fillStyle = C.amber; ctx.textAlign = 'center';
-      ctx.fillText('answer', X(tgtX), Ys(series(tgtX)) - 8);
+      ctx.fillText('ANSWER', X(tgtX), Ys(series(tgtX)) - 8);
       ctx.fillStyle = C.faint; ctx.textAlign = 'center';
-      ctx.fillText('+24h', X(tgtX), Ys(series(tgtX)) + 14);
+      ctx.fillText('+24H', X(tgtX), Ys(series(tgtX)) + 14);
 
       // --- bottom mini-table: 4 fixed slots, one filled per completed stop ---
       var rowH = 22, tx = topPad.l, ty0 = midY + 18;
@@ -859,13 +859,13 @@
 
       // label the inputs / answer once (static labels)
       ctx.font = MONO; ctx.fillStyle = C.faint; ctx.textAlign = 'left';
-      ctx.fillText('inputs (46)', tx, ty0 - 6);
+      ctx.fillText('INPUTS (46)', tx, ty0 - 6);
       ctx.fillStyle = C.amber;
-      ctx.fillText('answer', tx + 5 * (sq + gap) + 26, ty0 - 6);
+      ctx.fillText('ANSWER', tx + 5 * (sq + gap) + 26, ty0 - 6);
 
       // counter bottom-right rests on 599,000+
       ctx.font = MONO; ctx.fillStyle = C.faint; ctx.textAlign = 'right';
-      ctx.fillText('rows: 599,000+', w - topPad.r, h - 5);
+      ctx.fillText('ROWS: 599,000+', w - topPad.r, h - 5);
     }, WIN_DUR);
   })();
 
@@ -947,13 +947,13 @@
 
       // live error readout, top-right
       ctx.font = MONO; ctx.textAlign = 'right'; ctx.fillStyle = C.muted;
-      ctx.fillText('error: ' + e.mse.toFixed(3), s.w - pad.r + 56, pad.t + 4);
+      ctx.fillText('ERROR ' + e.mse.toFixed(3), s.w - pad.r + 56, pad.t + 4);
 
       // settled 'best question' label fades in as the line eases back to best
       if (settling) {
         ctx.globalAlpha = settleP;
         ctx.fillStyle = C.accent; ctx.textAlign = 'left';
-        ctx.fillText('best question: x > ' + TREE.best.thr.toFixed(2), m.X(TREE.best.thr) + 6, s.h - pad.b - 8);
+        ctx.fillText('BEST SPLIT: x > ' + TREE.best.thr.toFixed(2), m.X(TREE.best.thr) + 6, s.h - pad.b - 8);
         ctx.globalAlpha = 1;
       }
 
@@ -1060,8 +1060,8 @@
     if (aMemo > 0.6) {
       ctx.globalAlpha = ease((aMemo - 0.6) / 0.4);
       ctx.textAlign = 'left';
-      ctx.fillStyle = C.amber; ctx.fillText('memorizes the points', m.X(0.30), m.Y(1.06));
-      ctx.fillStyle = C.accent; ctx.fillText('learns the shape', m.X(0.04), m.Y(-0.07));
+      ctx.fillStyle = C.amber; ctx.fillText('MEMORIZES THE POINTS', m.X(0.30), m.Y(1.06));
+      ctx.fillStyle = C.accent; ctx.fillText('LEARNS THE SHAPE', m.X(0.04), m.Y(-0.07));
       ctx.globalAlpha = 1;
     }
 
@@ -1069,12 +1069,12 @@
     // curve, so anchor them to a clear strip at the left mid-height.
     var rx = m.X(0.02), yy = m.Y(0.42);
     ctx.textAlign = 'left'; ctx.font = MONO;
-    ctx.fillStyle = C.amber; ctx.fillText('past error: ' + OVERFIT.pastMemo.toFixed(2), rx, yy);
-    ctx.fillStyle = C.accent; ctx.fillText('past error: ' + OVERFIT.pastSmooth.toFixed(2), rx, yy + 14);
+    ctx.fillStyle = C.amber; ctx.fillText('PAST ERROR ' + OVERFIT.pastMemo.toFixed(2), rx, yy);
+    ctx.fillStyle = C.accent; ctx.fillText('PAST ERROR ' + OVERFIT.pastSmooth.toFixed(2), rx, yy + 14);
     if (aTest > 0.2) {
       ctx.globalAlpha = ease(clamp((aTest - 0.2) / 0.8, 0, 1));
-      ctx.fillStyle = C.amber; ctx.fillText('new-data error: ' + OVERFIT.newMemo.toFixed(2), rx, yy + 32);
-      ctx.fillStyle = C.accent; ctx.fillText('new-data error: ' + OVERFIT.newSmooth.toFixed(2), rx, yy + 46);
+      ctx.fillStyle = C.amber; ctx.fillText('NEW-DATA ERROR ' + OVERFIT.newMemo.toFixed(2), rx, yy + 32);
+      ctx.fillStyle = C.accent; ctx.fillText('NEW-DATA ERROR ' + OVERFIT.newSmooth.toFixed(2), rx, yy + 46);
       ctx.globalAlpha = 1;
     }
     ctx.globalAlpha = 1;
@@ -1330,7 +1330,7 @@
     if (t >= P1 - 0.3) {
       ctx.font = MONO; ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
       var cntY = panelTop - 7 < topY + 9 ? panelTop + 11 : panelTop - 7;
-      ctx.fillText('inputs: ' + countN + ' / 46', panel.x + panel.w, cntY);
+      ctx.fillText('INPUTS: ' + countN + ' / 46', panel.x + panel.w, cntY);
       ctx.textAlign = 'left';
     }
 
@@ -1417,7 +1417,7 @@
     if (badgeAppear > 0.001) {
       var bgy = mStackBot + subGap + badgeGap;
       ctx.globalAlpha = badgeAppear;
-      var btxt = 'x 34 weather futures';
+      var btxt = '× 34 WEATHER FUTURES';
       ctx.font = MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       var bwid = ctx.measureText(btxt).width + 16;
       var bxl = mcol.cx - bwid / 2;
@@ -1434,9 +1434,9 @@
       var tally = Math.round(170 * tallyP);
       ctx.globalAlpha = ease(clamp((t - (P2 + 1.8)) / 0.6, 0, 1));
       ctx.fillStyle = C.ink; ctx.font = MONO; ctx.textAlign = 'center';
-      ctx.fillText(tally + ' model runs', mcol.cx, bgy + tally1Gap);
+      ctx.fillText(tally + ' MODEL RUNS', mcol.cx, bgy + tally1Gap);
       ctx.fillStyle = C.muted;
-      ctx.fillText('per forecast hour', mcol.cx, bgy + tally1Gap + tally2Gap);
+      ctx.fillText('PER FORECAST HOUR', mcol.cx, bgy + tally1Gap + tally2Gap);
       ctx.textAlign = 'left'; ctx.globalAlpha = 1;
     }
 
@@ -1484,7 +1484,7 @@
       // anchored 'now' dot at the left
       dot(ctx, fX(0), fY(med(0)), 3.5, C.ink);
       ctx.fillStyle = C.muted; ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('now', fX(0) + 6, fY(med(0)) - 8);
+      ctx.fillText('NOW', fX(0) + 6, fY(med(0)) - 8);
       // edge labels once drawn, in the reserved gutter, flush to the band ends
       if (fAppear > 0.9) {
         ctx.globalAlpha = ease((fAppear - 0.9) / 0.1);
