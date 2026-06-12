@@ -74,6 +74,34 @@
         }
       }
 
+      // the rail is a scrollbar: click anywhere to jump, drag to scrub
+      function fracFromPointer(e) {
+        var rect = rail.getBoundingClientRect();
+        var y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        return Math.min(1, Math.max(0, y / rect.height));
+      }
+      function jumpTo(frac, smooth) {
+        var max = docHeight() - window.innerHeight;
+        window.scrollTo({ top: frac * max, behavior: smooth ? 'smooth' : 'auto' });
+      }
+      var scrubbing = false;
+      rail.addEventListener('mousedown', function (e) {
+        if (e.target.classList.contains('ms-ruler__label')) return;
+        scrubbing = true; jumpTo(fracFromPointer(e), false); e.preventDefault();
+      });
+      window.addEventListener('mousemove', function (e) {
+        if (scrubbing) jumpTo(fracFromPointer(e), false);
+      });
+      window.addEventListener('mouseup', function () { scrubbing = false; });
+      rail.addEventListener('touchstart', function (e) {
+        if (e.target.classList.contains('ms-ruler__label')) return;
+        scrubbing = true; jumpTo(fracFromPointer(e), false);
+      }, { passive: true });
+      rail.addEventListener('touchmove', function (e) {
+        if (scrubbing) jumpTo(fracFromPointer(e), false);
+      }, { passive: true });
+      rail.addEventListener('touchend', function () { scrubbing = false; });
+
       window.addEventListener('scroll', update, { passive: true });
       window.addEventListener('resize', layout);
       if (document.fonts && document.fonts.ready) {

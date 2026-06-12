@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=11">
+  <link rel="stylesheet" href="/style.css?v=12">
   <meta name="theme-color" content="#ffffff">
 </head>
 <body class="ms-page">
@@ -31,12 +31,17 @@
   <main>
     <div class="wrap">
       <section class="hero reveal" id="sec-fan">
-        <header class="ms-masthead">
+        <header class="dash-head">
           <p class="ms-crumb"><a href="/">Buoycast</a> <span>/</span> Live forecast</p>
           <p class="ms-meta"><span id="stamp">reading the buoy&hellip;</span> &middot; Wilmette buoy 45174</p>
-          <h1 class="ms-title">The next 168 hours.</h1>
-          <p class="ms-sub">Lake Michigan surface temperature, forecast hour by hour to seven days, with a band that has earned the right to be believed.</p>
         </header>
+        <h1 class="dash-title">The next 168 hours.</h1>
+        <div class="headline-row">
+          <div><span>In the water now</span><b id="hl-now">--</b></div>
+          <div><span>Tomorrow, median</span><b id="hl-24">--</b></div>
+          <div><span>Seven days, median</span><b id="hl-168">--</b></div>
+          <div><span>Seven-day 90% band</span><b id="hl-band">--</b></div>
+        </div>
         <figure class="ml-fig">
           <div class="ml-fig__frame">
             <p class="subhead">Hourly forecast &middot; P5 / P25 / P50 / P75 / P95</p>
@@ -75,6 +80,7 @@
           <figure class="cell cell--map">
             <img src="/assets/locator.png" alt="Satellite surface-temperature field around the buoy, the station marked with a white ring">
             <figcaption>Where it sits &middot; 2.2 km offshore &middot; NASA MUR SST</figcaption>
+            <div class="cell--map__live" aria-hidden="true"><span id="map-air">&nbsp;</span><span id="map-wind">&nbsp;</span></div>
           </figure>
           <div class="cell cell--coords">
             <p class="cell__big">42.1380&deg;&nbsp;N<br>87.6553&deg;&nbsp;W</p>
@@ -284,7 +290,7 @@
     ];
   </script>
   <script src="/nav.js?v=1"></script>
-  <script src="/ruler.js?v=1"></script>
-  <script src="/app.js?v=7"></script>
+  <script src="/ruler.js?v=2"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>

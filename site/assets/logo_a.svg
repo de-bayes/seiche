@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640" role="img" aria-label="Buoycast logo: a buoy built from statistical symbols">
+  <title>Buoycast - geometric mark</title>
+
+  <!-- ============================================================
+       LOGO A  -  geometric / minimal
+       hull  = filled Gaussian (normal distribution) area
+       mast  = capital Sigma standing upright
+       light = point estimate dot with circumflex (x-hat)
+       water = single cosine waterline
+       ============================================================ -->
+
+  <!-- palette -->
+  <!-- ink #1a1a1a  red #e0312e  blue #2456e6  yellow #ffd02e  green #00a05a -->
+
+  <g fill="none" stroke="#1a1a1a" stroke-width="0" >
+
+  <!-- ========== WATERLINE: a cosine curve ========== -->
+  <path d="M 36 470
+           C 76 442, 116 442, 156 470
+           S 236 498, 276 470
+           S 356 442, 396 470
+           S 476 498, 512 470"
+        fill="none" stroke="#2456e6" stroke-width="9" stroke-linecap="round"/>
+  <path d="M 36 502
+           C 84 480, 132 480, 180 502
+           S 276 524, 324 502
+           S 420 480, 468 502"
+        fill="none" stroke="#2456e6" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+
+  </g>
+
+  <!-- ========== HULL: the area under a Gaussian curve ========== -->
+  <!-- The hull sits at the waterline. Its top edge is a bell curve. -->
+  <!-- quantile bands: outer (light blue P5-P95), mid (yellow), core (red P50 sliver) -->
+  <defs>
+    <clipPath id="bellA">
+      <path d="M 96 476
+               C 132 476, 150 468, 168 430
+               C 190 384, 206 250, 256 250
+               C 306 250, 322 384, 344 430
+               C 362 468, 380 476, 416 476
+               Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- full bell fill (outer band) -->
+  <g clip-path="url(#bellA)">
+    <rect x="80" y="240" width="352" height="240" fill="#cdd9fb"/>
+    <!-- mid quantile band -->
+    <rect x="206" y="240" width="100" height="240" fill="#ffd02e"/>
+    <!-- core P50 band -->
+    <rect x="241" y="240" width="30" height="240" fill="#e0312e"/>
+  </g>
+  <!-- bell outline -->
+  <path d="M 96 476
+           C 132 476, 150 468, 168 430
+           C 190 384, 206 250, 256 250
+           C 306 250, 322 384, 344 430
+           C 362 468, 380 476, 416 476"
+        fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- hull baseline (waterline chord) -->
+  <line x1="96" y1="476" x2="416" y2="476" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round"/>
+  <!-- mu tick: dashed center line marking the mean -->
+  <line x1="256" y1="476" x2="256" y2="262" stroke="#1a1a1a" stroke-width="3.5" stroke-dasharray="9 9" opacity="0.7"/>
+
+  <!-- ========== MAST: a capital Sigma standing upright ========== -->
+  <!-- The Sigma rises out of the bell peak as the buoy tower. -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 300 250
+             L 212 250
+             L 256 188
+             L 212 126
+             L 300 126"
+          fill="none" stroke="#1a1a1a" stroke-width="13"/>
+  </g>
+
+  <!-- short neck from the Sigma top bar up to the spar -->
+  <line x1="256" y1="126" x2="256" y2="108" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/>
+  <!-- short cross-spar (error bar) below the light -->
+  <line x1="214" y1="108" x2="298" y2="108" stroke="#00a05a" stroke-width="7" stroke-linecap="round"/>
+  <line x1="214" y1="100" x2="214" y2="116" stroke="#00a05a" stroke-width="7" stroke-linecap="round"/>
+  <line x1="298" y1="100" x2="298" y2="116" stroke="#00a05a" stroke-width="7" stroke-linecap="round"/>
+  <!-- neck from spar up to the light -->
+  <line x1="256" y1="108" x2="256" y2="98" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- ========== LIGHT: point estimate dot with circumflex hat ========== -->
+  <!-- the x-hat: ^ over a solid dot -->
+  <path d="M 232 64 L 256 40 L 280 64"
+        fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="86" r="15" fill="#e0312e" stroke="#1a1a1a" stroke-width="5"/>
+
+  <!-- ========== residual scatter: a few dots around the buoy ========== -->
+  <circle cx="128" cy="300" r="7" fill="#00a05a"/>
+  <circle cx="392" cy="276" r="7" fill="#2456e6"/>
+  <circle cx="408" cy="350" r="6" fill="#e0312e"/>
+  <circle cx="108" cy="372" r="6" fill="#ffd02e" stroke="#1a1a1a" stroke-width="2"/>
+</svg>

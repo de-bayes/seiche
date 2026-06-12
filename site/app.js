@@ -163,6 +163,16 @@
     document.getElementById('stamp').textContent =
       'UPDATED ' + gen.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).toUpperCase();
 
+    /* headline numbers + the live readout on the station map */
+    function put(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+    var t24 = data.trajectory[23], t168 = data.trajectory[167];
+    put('hl-now', data.now.wtmp_f.toFixed(1) + '\u00b0F');
+    put('hl-24', t24.p50.toFixed(1) + '\u00b0F');
+    put('hl-168', t168.p50.toFixed(1) + '\u00b0F');
+    put('hl-band', t168.p05.toFixed(0) + '\u2013' + t168.p95.toFixed(0) + '\u00b0F');
+    put('map-air', 'AIR ' + data.now.atmp_f.toFixed(1) + '\u00b0F');
+    put('map-wind', 'WIND ' + data.now.wspd_kt.toFixed(1) + ' KT');
+
     /* chips */
     var h24 = null, h168 = null;
     stats.horizons.forEach(function (s) { if (s.h === 24) h24 = s; if (s.h === 168) h168 = s; });

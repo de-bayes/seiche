@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640" role="img" aria-label="Buoycast logo: a can buoy drawn as a box plot bobbing on distribution waves">
+  <title>Buoycast - playful boxplot buoy</title>
+
+  <!-- ============================================================
+       LOGO C  -  playful nav "can" buoy
+       body    = a vertical box plot (IQR box + whiskers)
+       topmark = epsilon set above a circumflex hat (the light)
+       float   = a half Gaussian bobbing collar at the waterline
+       water   = two distribution tails crossing
+       palette: ink 1a1a1a, red e0312e, blue 2456e6,
+                yellow ffd02e, green 00a05a, pink ff5c8a
+       ============================================================ -->
+
+  <!-- =============== WATER: two crossing distribution tails =============== -->
+  <path d="M 24 512
+           C 90 478, 150 478, 216 512
+           S 350 546, 416 512
+           S 520 478, 552 500"
+        fill="none" stroke="#2456e6" stroke-width="11" stroke-linecap="round"/>
+  <path d="M 24 548
+           C 96 520, 168 520, 240 548
+           S 372 576, 444 548
+           S 540 524, 560 540"
+        fill="none" stroke="#2456e6" stroke-width="7" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- =============== FLOAT COLLAR: a filled half-Gaussian =============== -->
+  <!-- the buoy floats inside a shaded bell, like a probability cushion -->
+  <defs>
+    <clipPath id="collarC">
+      <path d="M 96 506
+               C 140 506, 158 486, 186 446
+               C 214 406, 226 396, 256 396
+               C 286 396, 298 406, 326 446
+               C 354 486, 372 506, 416 506
+               Z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#collarC)">
+    <rect x="90" y="390" width="332" height="120" fill="#ffe1ea"/>
+    <rect x="206" y="390" width="100" height="120" fill="#ff5c8a"/>
+  </g>
+  <path d="M 96 506
+           C 140 506, 158 486, 186 446
+           C 214 406, 226 396, 256 396
+           C 286 396, 298 406, 326 446
+           C 354 486, 372 506, 416 506"
+        fill="none" stroke="#1a1a1a" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="96" y1="506" x2="416" y2="506" stroke="#1a1a1a" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- =============== BODY: a vertical BOX PLOT =============== -->
+  <!-- upper whisker (max) -->
+  <line x1="256" y1="150" x2="256" y2="206" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="228" y1="150" x2="284" y2="150" stroke="#00a05a" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- the IQR box = the can body -->
+  <rect x="208" y="206" width="96" height="170" rx="10"
+        fill="#ffd02e" stroke="#1a1a1a" stroke-width="8"/>
+  <!-- median line inside the box -->
+  <line x1="208" y1="300" x2="304" y2="300" stroke="#e0312e" stroke-width="10" stroke-linecap="round"/>
+  <!-- Q1 / Q3 faint guide ticks -->
+  <line x1="208" y1="250" x2="224" y2="250" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="288" y1="250" x2="304" y2="250" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="208" y1="344" x2="224" y2="344" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="288" y1="344" x2="304" y2="344" stroke="#1a1a1a" stroke-width="4"/>
+
+  <!-- lower whisker (min) going into the float -->
+  <line x1="256" y1="376" x2="256" y2="396" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- =============== TOPMARK + LIGHT =============== -->
+  <!-- circumflex hat over the can -->
+  <path d="M 226 122 L 256 92 L 286 122"
+        fill="none" stroke="#1a1a1a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- epsilon as the beacon, sitting in the hat -->
+  <path d="M 268 78 C 244 78, 244 56, 270 56 C 250 56, 250 36, 272 36"
+        fill="none" stroke="#2456e6" stroke-width="8" stroke-linecap="round"/>
+  <!-- a bright point-estimate dot beside the epsilon -->
+  <circle cx="256" cy="150" r="11" fill="#e0312e" stroke="#1a1a1a" stroke-width="4"/>
+
+  <!-- =============== RESIDUAL SCATTER =============== -->
+  <circle cx="140" cy="280" r="8" fill="#00a05a"/>
+  <circle cx="380" cy="252" r="8" fill="#2456e6"/>
+  <circle cx="120" cy="346" r="6" fill="#e0312e"/>
+  <circle cx="396" cy="324" r="6" fill="#ffd02e" stroke="#1a1a1a" stroke-width="2"/>
+  <circle cx="360" cy="400" r="6" fill="#1a1a1a"/>
+  <circle cx="150" cy="412" r="6" fill="#ff5c8a"/>
+</svg>
