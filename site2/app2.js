@@ -1,5 +1,5 @@
 /* ============================================================
-   BUOYCAST · site2 · app2.js
+   SISH · site2 · app2.js
    Live feed -> live strip + dark fan chart. Graceful fallback.
    ============================================================ */
 
@@ -234,7 +234,7 @@ function boot() {
       drawFan(d);
     })
     .catch((err) => {
-      console.warn("buoycast: live fetch failed,", err.message);
+      console.warn("SISH: live fetch failed,", err.message);
       fillStripFallback();
     });
 }

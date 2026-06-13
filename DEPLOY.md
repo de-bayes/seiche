@@ -1,15 +1,19 @@
-# Deploying buoycast
+# Deploying SISH
 
 ## Current deployment (live since 2026-06-11)
 
-- **Site**: https://buoycast.vercel.app (Vercel project `buoycast`, static deploy
-  of `site/`; `buoycast.mccomb.ca` attached, waiting on a GoDaddy A record
-  `buoycast -> 76.76.21.21`). Deploy with `cd site && vercel deploy --prod --yes`
+- **Site**: https://sish.vercel.app (Vercel project `sish`, static deploy
+  of `site/`; `sish.mccomb.ca` attached, waiting on a GoDaddy A record
+  `sish -> 76.76.21.21`). Deploy with `cd site && vercel deploy --prod --yes`
   (must run from `site/`, not the repo root).
 - **Worker**: GCE VM `buoycast`, zone `us-central1-a`, e2-micro free tier,
   IP 34.172.202.78, 4GB swap. Publishes every 10 minutes (:04, :14, ...), retrains Sundays
-  09:30 UTC (systemd timers). Code lives in /opt/buoycast; update by scp'ing
-  a tarball (repo is private, the VM has no git auth).
+  09:30 UTC (systemd timers `sish-publish` / `sish-retrain`). Code lives in /opt/sish;
+  update by scp'ing a tarball (repo is private, the VM has no git auth).
+- **Naming note**: the project rebranded buoycast -> SISH on 2026-06-13. Two
+  internal labels intentionally stay `buoycast`: the GCE instance name (immutable
+  without recreating the VM) and the unix service user (renaming it risks file
+  ownership and the venv). Everything user-facing and the paths/units are `sish`.
 - **Data path**: browser -> Vercel -> rewrite proxy -> Caddy on the VM at
   https://34.172.202.78.sslip.io (Let's Encrypt via sslip.io, since Vercel
   rewrites require an https origin). `site/.vercelignore` excludes
@@ -47,8 +51,8 @@ add swap if you use it. Sustained-use discounts apply automatically.
 
 ```bash
 gcloud compute ssh buoycast --zone=us-central1-a
-sudo git clone https://github.com/de-bayes/buoycast.git /opt/buoycast
-cd /opt/buoycast/deploy && sudo bash setup_vps.sh
+sudo git clone https://github.com/de-bayes/sish.git /opt/sish
+cd /opt/sish/deploy && sudo bash setup_vps.sh
 ```
 
 The setup script installs deps, creates a `buoycast` system user and venv,
@@ -62,7 +66,7 @@ forecast self-maintains: publish at :08 every hour, full retrain Sundays
 **Option A, simplest: everything on the VM.**
 ```bash
 sudo apt-get install -y caddy
-sudo cp /opt/buoycast/deploy/Caddyfile /etc/caddy/Caddyfile  # edit domain first
+sudo cp /opt/sish/deploy/Caddyfile /etc/caddy/Caddyfile  # edit domain first
 sudo systemctl reload caddy
 ```
 Point DNS (an A record) at the VM's static IP; Caddy gets HTTPS certificates
@@ -89,14 +93,14 @@ history into a data log.
 ## 4. Operations
 
 ```bash
-systemctl list-timers 'buoycast-*'        # next scheduled runs
-journalctl -u buoycast-publish -n 30      # last publish log
-journalctl -u buoycast-retrain -n 50      # last retrain log
-sudo systemctl start buoycast-publish     # force a publish now
+systemctl list-timers 'sish-*'        # next scheduled runs
+journalctl -u sish-publish -n 30      # last publish log
+journalctl -u sish-retrain -n 50      # last retrain log
+sudo systemctl start sish-publish     # force a publish now
 ```
 
-Updating code: `cd /opt/buoycast && sudo -u buoycast git pull`, then
-`sudo systemctl start buoycast-publish` to verify.
+Updating code: `cd /opt/sish && sudo -u buoycast git pull`, then
+`sudo systemctl start sish-publish` to verify.
 
 ## Notes
 

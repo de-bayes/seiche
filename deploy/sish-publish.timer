@@ -1,5 +1,5 @@
 [Unit]
-Description=run buoycast publish hourly
+Description=run SISH publish hourly
 
 [Timer]
 # every 10 minutes, offset +4 so each run lands just after the buoy's

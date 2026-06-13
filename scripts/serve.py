@@ -6,7 +6,7 @@ import http.server
 import socketserver
 
 PORT = 4175
-DIRECTORY = "/Users/ryan/Coding/tier2/buoycast/site"
+DIRECTORY = "/Users/ryan/Coding/tier2/sish/site"
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
