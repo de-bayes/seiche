@@ -4,7 +4,7 @@ Probabilistic water temperature forecasts for the Evanston-Wilmette lakefront: a
 
 ## Production model
 
-Five horizon-conditioned gradient-boosted quantile regressors trained on ~280k stacked (time, horizon) rows, anchor-blended to the latest observation with an 8-hour decay. Test MAE (gap-separated final 35 days): 0.16F at +1h, 0.91F at +24h, 1.85F at +168h, where persistence runs 0.16 / 1.26 / 4.01F. The 90% band covers 83 to 93% across leads; calibration is shown on the site, not assumed.
+Five horizon-conditioned gradient-boosted quantile regressors trained on ~280k stacked (time, horizon) rows, anchor-blended to the latest observation with an 8-hour decay. Test MAE (gap-separated final 35 days): 0.16F at +1h, 0.91F at +24h, 1.85F at +168h, where persistence runs 0.16 / 1.26 / 4.01F. The 90% band is an adaptive normalized-conformal interval: its width follows a live difficulty signal (recent realized +24h error vs the calibrated typical level), so it tightens through calm regimes and widens through the hard ones. Per-fold backtest coverage holds far more uniformly than a static band (spread 0.028 vs 0.082; the 2019 turnover fold rose from 0.75 to 0.93). Calibration is shown on the site, not assumed; see `DOCS.md`.
 
 ## Pipeline
 

@@ -82,17 +82,49 @@ p50 = member_anch.mean(axis=0)
 sigma_wx = member_anch.std(axis=0, ddof=1) if member_anch.shape[0] > 1 else np.zeros_like(p50)
 member_disp = member_anch
 
-# bands = perfect-weather residual (backtest calibration) (+) weather-model spread,
-# combined in quadrature. The two are independent: the backtest residual is
-# measured under ERA5 (perfect weather), the ensemble spread is the weather term.
+# adaptive band scale: how far our recent, already-resolved +24h calls have
+# landed from observation, vs the typical level the backtest calibrated on. A
+# run of bad calls (a regime shift) stretches the bands; a calm run tightens
+# them. Built the same way backtest.py's difficulty signal is: anchored +24h
+# forecasts over the last 48h, mean absolute error, all genuinely resolved.
+DECAY24 = float(np.exp(-23 / TAU))
+rb = [t0 - pd.Timedelta(hours=k) for k in range(72, 24, -1)]   # valid times within last 48h
+X24 = featuresq.assemble(hourly_buoy, wx_blend, 24).reindex(columns=feat_cols)
+X1 = featuresq.assemble(hourly_buoy, wx_blend, 1).reindex(columns=feat_cols)
+obs = hourly_buoy["WTMP"]
+rb = [b for b in rb if b in X24.index and b in X1.index and b in obs.index
+      and (b + pd.Timedelta(hours=24)) in obs.index]
+recenterr = None
+if len(rb) >= 6:
+    raw24 = median_model.predict(X24.loc[rb])
+    raw1 = median_model.predict(X1.loc[rb])
+    obs_b = obs.reindex(rb).to_numpy()
+    anch24 = raw24 + (obs_b - raw1) * DECAY24       # same anchoring production uses
+    actual = obs.reindex([b + pd.Timedelta(hours=24) for b in rb]).to_numpy()
+    e = np.abs(anch24 - actual)
+    e = e[np.isfinite(e)]
+    recenterr = float(np.mean(e)) if e.size else None
+
+# bands = model residual (+) weather-model spread, combined in quadrature. The
+# residual half-width is the backtest's normalized-conformal quantile per
+# horizon, re-inflated by the live difficulty scale above; the spread is the
+# ensemble term. The two are independent: the residual is measured under
+# reanalysis weather, the ensemble spread is the weather term.
 with open("models/qstats.json") as fh:
     calib = json.load(fh)["calib"]
+scale = 1.0
 bt_calib_path = pathlib.Path("models/backtest.json")
 if bt_calib_path.exists():
-    bc = json.load(open(bt_calib_path)).get("calib")
-    if bc:
-        calib = bc
-        print(f"using backtest calibration ({len(calib)} horizons)")
+    bt = json.load(open(bt_calib_path))
+    cn = bt.get("calib_norm")
+    if cn and recenterr is not None:
+        calib = cn["horizons"]
+        scale = float(np.clip(recenterr / cn["ref"], cn["clip"][0], cn["clip"][1]))
+        print(f"adaptive bands: recent +24h err {recenterr:.2f}C / ref {cn['ref']:.2f}C "
+              f"-> scale {scale:.2f}")
+    elif bt.get("calib"):
+        calib = bt["calib"]
+        print(f"static backtest calibration ({len(calib)} horizons); no adaptive scale")
 ch = np.array(sorted(int(k) for k in calib))
 getc = lambda key: np.interp(hs, ch, [calib[str(k)][key] for k in ch])
 # per-member anchoring already pins sigma to ~0 at h=1 and lets it grow with
@@ -100,7 +132,7 @@ getc = lambda key: np.interp(hs, ch, [calib[str(k)][key] for k in ch])
 Z = {"e05": -1.645, "e25": -0.674, "e75": 0.674, "e95": 1.645}
 offsets = {}
 for key in ["e05", "e25", "e75", "e95"]:
-    resid = np.abs(getc(key))                      # perfect-weather half-width (C)
+    resid = np.abs(getc(key)) * scale               # regime-adjusted residual half-width (C)
     wxterm = abs(Z[key]) * sigma_wx                 # weather-driven half-width (C)
     mag = np.sqrt(resid ** 2 + wxterm ** 2)
     offsets[key] = np.sign(Z[key]) * np.maximum.accumulate(mag)
@@ -163,7 +195,7 @@ for k, name in enumerate(member_names):
 # uncertainty decomposition (90% half-widths, deg F): the irreducible part the
 # model carries even under perfect weather, and the part from weather-model
 # disagreement. They combine in quadrature to the published band.
-resid90 = np.maximum.accumulate((np.abs(getc("e05")) + np.abs(getc("e95"))) / 2)
+resid90 = np.maximum.accumulate((np.abs(getc("e05")) + np.abs(getc("e95"))) / 2 * scale)
 unc = [{"h": h, "irreducible": round(float(resid90[i]) * 1.8, 2),
         "weather": round(float(1.645 * sigma_wx[i]) * 1.8, 2)}
        for i, h in enumerate(horizons)]
@@ -183,6 +215,7 @@ out = {
     "daily": daily[:7],
     "members": members_out,
     "uncertainty": unc,
+    "band_scale": round(float(scale), 2),
 }
 
 # fold the multi-season backtest and driver study into the site stats so the

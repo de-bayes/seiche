@@ -28,6 +28,22 @@ QUANTILES = [0.05, 0.25, 0.5, 0.75, 0.95]
 FUT_COLS = ["fut_u", "fut_v", "fut_wspd", "fut_t2m", "fut_solar", "fut_gust",
             "fut_dewdep", "fut_airwater"]
 
+# columns (all present in both stack() and inference_rows(), so no model retrain)
+# used to gauge how turbulent the water is right now -- the std of the last-24 h
+# WTMP lag ladder. See regime_signal().
+VOL_COLS = ["WTMP", "wtmp_l1", "wtmp_l2", "wtmp_l3", "wtmp_l6", "wtmp_l12", "wtmp_l24"]
+
+
+def regime_signal(X):
+    """Recent water-temp volatility at each base time (deg C): the dispersion of
+    the last-24 h WTMP lag ladder. A candidate difficulty signal for conditional
+    conformal bands. It was tested (scripts/band_method_compare.py) but lost to
+    the trailing realized-error scale used in backtest.py: volatility tracks
+    |error| only +0.22 and is NOT elevated in the 2019 regime-miss fold, so it
+    could not fix that fold's under-coverage. Kept for the analysis scripts."""
+    ladder = X[VOL_COLS].to_numpy(dtype=float)
+    return np.nanstd(ladder, axis=1)
+
 # open-lake buoy still fetched (data/buoy_neighbor.csv) but not used as a
 # feature; it added variance without skill on the backtest.
 NEIGHBOR_STATION = "45026"

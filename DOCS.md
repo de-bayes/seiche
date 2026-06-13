@@ -1,0 +1,62 @@
+# buoycast engineering notes
+
+Running log of non-obvious decisions and the bugs behind them. Newest first.
+
+## 2026-06-12 — Adaptive band calibration (fixed regime-year under-coverage)
+
+**Symptom.** The 90% band held ~0.90 marginally but its coverage swung wildly by
+season: the rolling backtest showed 0.97-0.98 in calm years (bands too wide) and
+**0.75 in 2019** (bands far too narrow). One static per-horizon width cannot be
+right in both a placid October and a turnover-driven one.
+
+**Root cause.** The published residual half-width was a single pooled
+split-conformal quantile per horizon (`backtest.json` `calib`). Split conformal
+is only *marginally* valid: it guarantees ~90% over the whole pool, not within
+any particular regime. The weather-ensemble term in `publish.py` already
+breathed with conditions, but the model-residual term was frozen, so when the
+model itself blew out (a regime the features could not anticipate, e.g. 2019)
+nothing widened.
+
+**What did NOT work, and why we did not ship it.**
+- *Volatility-conditioned bands* (std of the WTMP lag ladder, Mondrian terciles).
+  Volatility tracks |error| only +0.22 and, critically, 2019 was a *level/regime*
+  miss, not a choppy-water year (its volatility sat in the middle tercile). It
+  cut coverage spread only 0.082 -> 0.071 and left 2019 at 0.74. See
+  `featuresq.regime_signal` (kept for the analysis scripts) and
+  `scripts/band_signal_panel.py`.
+- *MUR satellite / LMHOFS physics as a median anchor.* Already rejected by the
+  pre-registered `validate_streams2.py` (sat_lean +0.022F but 5/9 wins and a
+  -0.056F worst fold; phys_lean +0.016F, 3/7). We did not override that result.
+  Once the adaptive scale below fixed the 2019 under-coverage these streams were
+  meant to catch, a satellite band-conditioner became redundant complexity too.
+- *Linear (lasso/quantile) center model.* The old per-horizon `compare.py`
+  favored lasso, but in the production stacked/quantile/weather setup HGB beats
+  it at ~every horizon (MAE +0.29F, pinball +0.086F worse for linear), so the
+  center stays HGB. See `scripts/lasso_quantile_bakeoff.py`.
+
+**Fix — adaptive normalized conformal (ACI-style).** Normalize each residual by
+a live *difficulty* signal before conformalizing: the trailing-48h mean of the
+realized +24h error vs the typical level the backtest measured. A run of bad
+calls (a regime shift) stretches the bands; a calm run tightens them.
+- `backtest.py` conformalizes the **scaled** residuals per horizon and writes
+  `calib_norm = {ref, clip, horizons}` (quantiles in scale units) alongside the
+  static `calib` (still the fallback).
+- `publish.py` rebuilds the same difficulty signal live from its last-48h
+  resolved +24h forecasts, divides by `ref`, clips to `[0.5, 2.5]`, and
+  re-inflates the residual half-width by that scale (still combined in
+  quadrature with the ensemble spread). Exposes it as `data.json.band_scale`.
+
+**Validation** (`scripts/band_method_compare.py`, 131,745 pairs / 9 folds):
+recent-error normalization beat volatility, |median-persistence|, and a blend.
+Per-fold cover90 spread **0.082 -> 0.028**, 2019 **0.75 -> 0.93**, worst fold
+0.75 -> 0.83; calm-year bands get *sharper* (2025 3.6F -> 2.9F) while regime-year
+bands widen (2019 3.6F -> 5.7F). Median forecast and MAE are unchanged — this
+touches only the band, not the point estimate.
+
+**Invariant.** The published 90% band must cover ~0.90 *within each backtest
+fold*, not merely pooled. `backtest.py` prints the per-fold static-vs-adaptive
+coverage every run and stores it in `backtest.json.cover_diag`; the adaptive
+spread should stay well under the static spread (currently 0.028 vs 0.082) and no
+fold should fall below ~0.83. If a future fold under-covers in a way the
+recent-error scale does not catch, revisit the difficulty signal (the satellite
+basin-divergence idea is the first thing to try) before widening blindly.
