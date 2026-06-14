@@ -2,6 +2,30 @@
 
 Running log of non-obvious decisions and the bugs behind them. Newest first.
 
+## 2026-06-14 — Decision layer: swim, thresholds, alerts, beach
+
+Turned the calibrated distribution into decisions (`decide.py` + `beach.py`,
+wired through `publish.py` into `data.json`; dashboard panels in `site/`):
+- **Swim guidance** (`decide.swim_comfort`): category + plain advice + cold-
+  exposure guideline + wind/air exit caveat, for now and each of 7 days.
+- **Threshold probabilities** (`decide.threshold_probs`): per-day P(water>=T)
+  for 60/65/70F by linear-interp of the 5 calibrated quantiles (clamped to
+  [0.05,0.95]), averaged over the day's hours, + first-crossing days.
+- **Alerts** (`decide.alerts`): swim-threshold-reached, sharp cooling/upwelling
+  (>=4F median drop in ~4 days), swim-window-opening. Pushed to a free ntfy.sh
+  topic (`SEICHE_NTFY_TOPIC`, default seiche-wilmette-45174-lkmi), deduped via
+  data/alert_state.json, no-auth, graceful.
+- **Beach** (`beach.py`): a Ridge nearshore forecast (buoy + diurnal/seasonal +
+  solar + recent beach-buoy gap), LOYO MAE 1.04F vs 2.19 naive, climatology
+  fallback + 1.55x wider bands when no fresh reading. HONEST: it's the Ohio St
+  Chicago-shelf sensor ~25km south, a proxy, not Wilmette; labeled as such.
+  Integration gotcha: `_train()` reads the FULL data/buoy.csv (publish passes
+  only ~45d realtime, too thin for the ~800h MIN_TRAIN overlap).
+
+**Invariant.** Every block is optional: a missing/empty `swim/thresholds/beach/
+alerts` must render nothing and never crash the page or the publish. Beach
+returns [] (section hidden) when chibeach is missing/thin.
+
 ## 2026-06-14 — Subsurface streams promoted (tighter upwelling-tail bands)
 
 The long-lead worst case is upwelling / fall turnover: a sudden cold crash
