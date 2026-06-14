@@ -8,12 +8,14 @@ import os
 import pathlib
 import shutil
 import time
+import urllib.request
 
 import joblib
 import numpy as np
 import pandas as pd
 
 import buoy
+import decide
 import featuresq
 import fetch_lmhofs
 import fetch_mursst
@@ -241,6 +243,22 @@ out = {
     "band_scale": round(float(scale), 2),
 }
 
+# decisions from the calibrated distribution: swim guidance, threshold-exceedance
+# probabilities, alerts, and the nearshore beach forecast (all graceful)
+now_f = out["now"]["wtmp_f"]
+swim_now = decide.swim_comfort(now_f, out["now"]["atmp_f"], out["now"]["wspd_kt"])
+out["thresholds"] = decide.threshold_probs(trajectory)
+out["swim"] = {"now": swim_now,
+               "by_day": [{"date": d["date"], "label": d["label"], "p50": d["p50"],
+                           "swim": decide.swim_comfort(d["p50"])} for d in daily[:7]]}
+out["alerts"] = decide.alerts(now_f, daily[:7], out["thresholds"], swim_now)
+try:
+    import beach
+    out["beach"] = beach.beach_forecast(hourly_buoy, trajectory)
+except Exception as e:
+    print(f"  beach forecast skipped ({e})")
+    out["beach"] = []
+
 # fold the multi-season backtest and driver study into the site stats so the
 # bottom charts can render interactively from data, not static images
 with open("models/qstats.json") as fh:
@@ -263,6 +281,25 @@ shutil.copy("models/qstats.json", "site/stats.json")
 
 with open("site/data.json", "w") as fh:
     json.dump(out, fh)
+
+# phone push for NEW alerts via a free ntfy.sh topic (no auth, graceful, deduped
+# against data/alert_state.json so a standing condition is not re-sent each run).
+# Subscribe in the ntfy app to the topic to receive them.
+NTFY_TOPIC = os.environ.get("SEICHE_NTFY_TOPIC", "seiche-wilmette-45174-lkmi")
+_state = pathlib.Path("data/alert_state.json")
+_seen = set(json.loads(_state.read_text())) if _state.exists() else set()
+for a in out["alerts"]:
+    if a["title"] in _seen:
+        continue
+    try:
+        urllib.request.urlopen(urllib.request.Request(
+            f"https://ntfy.sh/{NTFY_TOPIC}", data=a["detail"].encode(), method="POST",
+            headers={"Title": a["title"], "Tags": "ocean,warning" if a["level"] == "watch" else "ocean"}),
+            timeout=10)
+        print(f"  pushed alert: {a['title']}")
+    except Exception as e:
+        print(f"  ntfy push skipped ({e})")
+_state.write_text(json.dumps([a["title"] for a in out["alerts"]]))
 
 # verification: log this forecast, then score the whole log against observation
 # for the Track Record page. The log is the real published numbers, so the
