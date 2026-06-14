@@ -7,6 +7,6 @@ Wants=network-online.target
 Type=oneshot
 User=buoycast
 WorkingDirectory=/opt/seiche
-ExecStart=/bin/bash -c 'set -e; V=/opt/seiche/venv/bin/python; $V fetch.py; $V fetch_weather.py; $V train_q.py --refit-full; $V backtest.py; $V corr.py; $V publish.py'
+ExecStart=/bin/bash -c 'set -e; V=/opt/seiche/venv/bin/python; $V fetch.py; $V fetch_weather.py; $V fetch_mursst.py update || true; $V fetch_lmhofs.py update || true; $V train_q.py --refit-full; $V backtest.py; $V corr.py; $V publish.py'
 TimeoutStartSec=7200
 Nice=15

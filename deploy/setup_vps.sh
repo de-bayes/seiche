@@ -36,6 +36,8 @@ echo "== initial bootstrap (fetch ~10 seasons of data, train, publish; ~30-60 mi
 sudo -u buoycast bash -c "cd $REPO && set -e \
   && venv/bin/python fetch.py \
   && venv/bin/python fetch_weather.py \
+  && { venv/bin/python fetch_mursst.py backfill || true; } \
+  && { venv/bin/python fetch_lmhofs.py backfill || true; } \
   && venv/bin/python train_q.py --refit-full \
   && venv/bin/python backtest.py \
   && venv/bin/python corr.py \
