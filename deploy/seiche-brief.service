@@ -1,0 +1,12 @@
+[Unit]
+Description=Seiche 6-hourly PDF brief
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=buoycast
+WorkingDirectory=/opt/seiche
+ExecStart=/opt/seiche/venv/bin/python brief.py
+TimeoutStartSec=300
+Nice=15

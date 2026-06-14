@@ -28,8 +28,9 @@ sudo -u buoycast "$REPO/venv/bin/pip" install --quiet -r "$REPO/requirements.txt
 echo "== systemd units"
 cp "$REPO"/deploy/seiche-publish.{service,timer} /etc/systemd/system/
 cp "$REPO"/deploy/seiche-retrain.{service,timer} /etc/systemd/system/
+cp "$REPO"/deploy/seiche-brief.{service,timer} /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now seiche-publish.timer seiche-retrain.timer
+systemctl enable --now seiche-publish.timer seiche-retrain.timer seiche-brief.timer
 
 echo "== initial bootstrap (fetch ~10 seasons of data, train, publish; ~30-60 min)"
 sudo -u buoycast bash -c "cd $REPO && set -e \

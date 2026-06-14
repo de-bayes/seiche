@@ -3,12 +3,17 @@
   "rewrites": [
     { "source": "/data.json", "destination": "https://34.172.202.78.sslip.io/data.json" },
     { "source": "/stats.json", "destination": "https://34.172.202.78.sslip.io/stats.json" },
-    { "source": "/verify.json", "destination": "https://34.172.202.78.sslip.io/verify.json" }
+    { "source": "/verify.json", "destination": "https://34.172.202.78.sslip.io/verify.json" },
+    { "source": "/briefs/:file", "destination": "https://34.172.202.78.sslip.io/briefs/:file" }
   ],
   "headers": [
     {
       "source": "/(data|stats|verify).json",
       "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=60" }]
+    },
+    {
+      "source": "/briefs/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }]
     }
   ]
 }
