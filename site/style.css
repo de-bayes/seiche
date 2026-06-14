@@ -449,6 +449,221 @@ canvas { width: 100%; display: block; }
   color: var(--muted);
 }
 
+/* =========================================================
+   Alert banner (top of page; hidden when empty)
+   ========================================================= */
+.alerts { margin: 1.4rem 0 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.alert {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+}
+.alert--watch { border-left-color: var(--amber); background: #fdf3e7; }
+.alert__tag {
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.56rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: none;
+  padding-top: 0.18rem;
+}
+.alert--watch .alert__tag { color: var(--amber); }
+.alert__body { min-width: 0; }
+.alert__title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.alert__detail {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+/* =========================================================
+   Swim decision (hero readout + 7-day strip)
+   ========================================================= */
+.swim-now {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1.8rem;
+  align-items: baseline;
+  padding-bottom: 1.8rem;
+  margin-bottom: 1.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+.swim-now__cat {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  grid-row: span 2;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.swim-now__dot {
+  width: 0.66em; height: 0.66em;
+  border-radius: 50%;
+  flex: none;
+  border: 1px solid rgba(20,24,30,0.18);
+}
+.swim-now__label {
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.5;
+  color: var(--ink);
+  max-width: 44ch;
+}
+.swim-now__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2.2rem;
+}
+.swim-now__meta div { min-width: 0; }
+.swim-now__meta span {
+  display: block;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 0.25rem;
+}
+.swim-now__meta b {
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.swim-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+}
+.swim-day {
+  padding: 1.1rem 0.4rem 1.2rem;
+  text-align: center;
+  border-left: 1px solid var(--rule);
+}
+.swim-day:first-child { border-left: none; }
+.swim-day__label {
+  display: block;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.swim-day b {
+  display: block;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0.4rem 0 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.swim-day__chip {
+  display: inline-block;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.18rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(20,24,30,0.12);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Threshold probabilities (heat-strip grid + word callouts)
+   ========================================================= */
+.thresh-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+.thresh-cell {
+  background: var(--bg);
+  padding: 0.7rem 0.4rem;
+  text-align: center;
+  min-height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.thresh-cell--corner { background: #fbfbf9; }
+.thresh-cell--head {
+  background: #fbfbf9;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.thresh-cell--row {
+  background: #fbfbf9;
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.thresh-cell__p {
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.thresh-notes {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.thresh-note {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.thresh-note__t {
+  font-family: var(--ms-mono, var(--mono));
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--accent);
+  flex: none;
+  min-width: 2.6rem;
+  font-variant-numeric: tabular-nums;
+}
+.thresh-note em { font-style: normal; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .swim-strip { grid-template-columns: repeat(4, 1fr); }
+  .swim-day:nth-child(4n + 1) { border-left: none; }
+  .swim-now { grid-template-columns: 1fr; }
+  .swim-now__cat { grid-row: auto; }
+}
+
 /* methodology */
 .method {
   display: grid;

@@ -331,6 +331,149 @@
     fanCanvas.addEventListener('touchmove', fanMove);
     fanCanvas.addEventListener('mouseleave', function () { fanHover = null; window.requestAnimationFrame(drawFan); });
 
+    /* ---- decision panels (swim / thresholds / beach / alerts) ----
+       every field is guarded: each block hides itself if its data is absent
+       or empty, so the dashboard renders fine against an older data.json */
+
+    // swim categories share the two-color palette: cold side reads as blue
+    // washes (deeper = colder), warm side as amber; nothing new introduced
+    var SWIM_COLORS = {
+      'frigid': 'rgba(18,87,160,0.85)',
+      'very cold': 'rgba(18,87,160,0.62)',
+      'cold': 'rgba(18,87,160,0.42)',
+      'cool': 'rgba(18,87,160,0.24)',
+      'pleasant': 'rgba(180,83,9,0.45)',
+      'warm': 'rgba(180,83,9,0.80)',
+    };
+    function swimColor(cat) { return SWIM_COLORS[(cat || '').toLowerCase()] || C.faint; }
+    function swimWord(cat) { return (cat || '').toUpperCase(); }
+
+    /* swim decision: the headline "should I swim" readout + 7-day strip */
+    if (data.swim && data.swim.now) {
+      var sw = data.swim.now;
+      var swNow = document.getElementById('swim-now');
+      if (swNow) {
+        var rows = '<div class="swim-now__cat">' +
+          '<span class="swim-now__dot" style="background:' + swimColor(sw.category) + '"></span>' +
+          (swimWord(sw.category) || '--') + '</div>' +
+          '<div class="swim-now__label">' + (sw.label || '') + '</div>' +
+          '<div class="swim-now__meta">';
+        if (sw.water_f != null) rows += '<div><span>Water now</span><b>' + sw.water_f.toFixed(1) + '°F</b></div>';
+        if (sw.exposure) rows += '<div><span>Safe exposure</span><b>' + sw.exposure + '</b></div>';
+        if (sw.exit_note) rows += '<div><span>On exit</span><b>' + sw.exit_note + '</b></div>';
+        rows += '</div>';
+        swNow.innerHTML = rows;
+      }
+      var swStrip = document.getElementById('swim-strip');
+      if (swStrip && data.swim.by_day) {
+        data.swim.by_day.forEach(function (d) {
+          var s = d.swim || {};
+          var temp = s.water_f != null ? s.water_f : d.p50;
+          var el = document.createElement('div');
+          el.className = 'swim-day';
+          el.innerHTML = '<span class="swim-day__label">' + (d.label || '').toUpperCase() + '</span>' +
+            '<b>' + (temp != null ? temp.toFixed(0) + '°' : '--') + '</b>' +
+            '<span class="swim-day__chip" style="border-color:' + swimColor(s.category) +
+            '">' + (swimWord(s.category) || '--') + '</span>';
+          swStrip.appendChild(el);
+        });
+      }
+    }
+
+    /* threshold probabilities: day x threshold heat-strip + word callouts */
+    if (data.thresholds && data.thresholds.by_day && data.thresholds.thresholds) {
+      var th = data.thresholds;
+      var grid = document.getElementById('thresh-grid');
+      if (grid) {
+        grid.style.gridTemplateColumns = '4.5rem repeat(' + th.by_day.length + ', 1fr)';
+        // header row: corner + day labels
+        var head = '<div class="thresh-cell thresh-cell--corner"></div>';
+        th.by_day.forEach(function (d) {
+          head += '<div class="thresh-cell thresh-cell--head">' + (d.label || '') + '</div>';
+        });
+        grid.innerHTML = head;
+        // one row per threshold (warmest on top reads as the "goal")
+        th.thresholds.slice().reverse().forEach(function (t) {
+          grid.innerHTML += '<div class="thresh-cell thresh-cell--row">≥' + t + '°</div>';
+          th.by_day.forEach(function (d) {
+            var p = d.p_ge && d.p_ge[String(t)] != null ? d.p_ge[String(t)] : null;
+            var bg = p == null ? 'transparent' : 'rgba(18,87,160,' + (0.06 + p * 0.62).toFixed(3) + ')';
+            var ink = p != null && p >= 0.6 ? '#ffffff' : C.ink;
+            var txt = p == null ? '–' : Math.round(p * 100) + '%';
+            grid.innerHTML += '<div class="thresh-cell" style="background:' + bg + '">' +
+              '<span class="thresh-cell__p" style="color:' + ink + '">' + txt + '</span></div>';
+          });
+        });
+      }
+      var notes = document.getElementById('thresh-notes');
+      if (notes && th.crossings) {
+        th.crossings.forEach(function (c) {
+          var line;
+          if (c.already) {
+            line = '<em>already there.</em> The water has cleared ' + c.temp + '°F.';
+          } else if (c.first_day) {
+            line = 'first likely on <em>' + c.first_day + '</em>' +
+              (c.prob != null ? ', peaking around ' + Math.round(c.prob * 100) + '% this week.' : '.');
+          } else {
+            var pk = c.prob != null ? Math.round(c.prob * 100) + '%' : 'low';
+            line = '<em>not this week</em> — peaks around ' + pk + '.';
+          }
+          var el = document.createElement('div');
+          el.className = 'thresh-note';
+          el.innerHTML = '<span class="thresh-note__t">' + c.temp + '°F</span><span>' + line + '</span>';
+          notes.appendChild(el);
+        });
+      }
+    }
+
+    /* beach proxy vs offshore buoy (interactive line chart); hide if empty */
+    if (Array.isArray(data.beach) && data.beach.length) {
+      var beachSec = document.getElementById('sec-beach');
+      if (beachSec) beachSec.hidden = false;
+      var be = data.beach;
+      // align the buoy daily median to the beach dates so both share an x-axis
+      var dailyByDate = {};
+      (data.daily || []).forEach(function (d) { dailyByDate[d.date] = d; });
+      var bxs = be.map(function (_, i) { return i; });
+      var buoyY = be.map(function (d) { var m = dailyByDate[d.date]; return m ? m.p50 : null; });
+      var lo = Infinity, hi = -Infinity;
+      be.forEach(function (d, i) {
+        lo = Math.min(lo, d.beach_lo); hi = Math.max(hi, d.beach_hi);
+        if (buoyY[i] != null) { lo = Math.min(lo, buoyY[i]); hi = Math.max(hi, buoyY[i]); }
+      });
+      lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
+      lineChart('beach', {
+        xs: bxs, x0: 0, x1: be.length - 1, y0: lo, y1: hi,
+        yTicks: ticksFor(lo, hi, 1), yUnit: '°',
+        xTicks: be.map(function (d, i) { return { v: i, label: (d.label || '') }; }),
+        bands: [{ lo: be.map(function (d) { return d.beach_lo; }), hi: be.map(function (d) { return d.beach_hi; }), color: C.band1 }],
+        series: [
+          { name: 'beach proxy (Ohio St)', ys: be.map(function (d) { return d.beach_p50; }), color: C.yellow, width: 2 },
+          { name: 'offshore buoy', ys: buoyY, color: C.cyan, width: 2 },
+        ],
+        fmt: function (v) { return v.toFixed(1) + '°'; },
+        xLabel: function (i) { return be[i] ? be[i].label : ''; },
+        note: 'beach proxy (amber, 90% band) · offshore buoy median (cyan)',
+      });
+    }
+
+    /* alert banner: watch = amber, good = blue; hide the wrap if empty */
+    if (Array.isArray(data.alerts) && data.alerts.length) {
+      var awrap = document.getElementById('alerts');
+      if (awrap) {
+        awrap.hidden = false;
+        data.alerts.forEach(function (a) {
+          var el = document.createElement('div');
+          el.className = 'alert' + (a.level === 'watch' ? ' alert--watch' : '');
+          var body = '<div class="alert__body"><div class="alert__title">' + (a.title || '') + '</div>';
+          if (a.detail) body += '<div class="alert__detail">' + a.detail + '</div>';
+          body += '</div>';
+          el.innerHTML = '<span class="alert__tag">' + ((a.kind || a.level || 'note')).toUpperCase() + '</span>' + body;
+          awrap.appendChild(el);
+        });
+      }
+    }
+
     /* daily digest */
     var dg = document.getElementById('digest');
     data.daily.forEach(function (d) {

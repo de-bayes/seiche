@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=15">
+  <link rel="stylesheet" href="/style.css?v=16">
   <link rel="icon" href="/assets/logo_mark.svg" type="image/svg+xml">
   <meta name="theme-color" content="#ffffff">
 </head>
@@ -38,6 +38,10 @@
   </div>
 
   <main>
+    <div class="wrap">
+      <div class="alerts" id="alerts" hidden></div>
+    </div>
+
     <div class="wrap">
       <section class="hero reveal" id="sec-fan">
         <header class="dash-head">
@@ -62,9 +66,34 @@
     </div>
 
     <div class="wrap">
-      <section class="section section--first reveal" id="sec-now">
+      <section class="section section--first reveal" id="sec-swim">
         <div class="section__head">
           <span class="section__num">01</span>
+          <h2 class="section__title">Should I swim?</h2>
+        </div>
+        <div class="swim-now" id="swim-now"></div>
+        <div class="figure">
+          <p class="subhead">The next seven days &middot; water median &amp; comfort category</p>
+          <div class="swim-strip" id="swim-strip"></div>
+        </div>
+        <p class="caption">Categories follow open-water swimming convention by water temperature alone; wind, waves, and your own acclimation matter too. Not a safety judgment &mdash; for that use NWS Chicago.</p>
+      </section>
+
+      <section class="section reveal" id="sec-thresh">
+        <div class="section__head">
+          <span class="section__num">02</span>
+          <h2 class="section__title">When does it warm up?</h2>
+        </div>
+        <div class="figure">
+          <p class="subhead">Probability the daily median clears each threshold</p>
+          <div class="thresh-grid" id="thresh-grid"></div>
+        </div>
+        <div class="thresh-notes" id="thresh-notes"></div>
+      </section>
+
+      <section class="section reveal" id="sec-now">
+        <div class="section__head">
+          <span class="section__num">03</span>
           <h2 class="section__title">In the water right now</h2>
         </div>
         <p class="now__big" id="now-wtmp">--</p>
@@ -74,12 +103,26 @@
 
       <section class="section reveal" id="sec-week">
         <div class="section__head">
-          <span class="section__num">02</span>
+          <span class="section__num">04</span>
           <h2 class="section__title">Seven days at a glance</h2>
         </div>
         <div class="figure">
           <div class="digest" id="digest"></div>
         </div>
+      </section>
+
+      <section class="section reveal" id="sec-beach" hidden>
+        <div class="section__head">
+          <span class="section__num">05</span>
+          <h2 class="section__title">At the beach, not the buoy</h2>
+        </div>
+        <figure class="ml-fig">
+          <div class="ml-fig__frame">
+            <p class="subhead">Nearshore proxy vs offshore buoy &middot; daily median &deg;F</p>
+            <canvas id="beach" height="260"></canvas>
+          </div>
+          <figcaption class="ml-fig__cap"><span class="ms-cap"><span class="ms-cap__n">fig.</span> The buoy sits 2.2 km offshore in 14 m of water; the shallows where people actually swim run warmer on a sunny, calm day. The nearshore line is a Chicago-shelf proxy from Ohio Street Beach roughly 25 km south, not a Wilmette measurement, with its own 90 percent band. Treat it as the warm-side bound, the offshore buoy as the cold-side bound.</span></figcaption>
+        </figure>
       </section>
     </div>
 
@@ -128,7 +171,7 @@
 
       <section class="section reveal" id="sec-skill">
         <div class="section__head">
-          <span class="section__num">03</span>
+          <span class="section__num">06</span>
           <h2 class="section__title">Skill by lead time</h2>
         </div>
         <figure class="ml-fig">
@@ -144,7 +187,7 @@
 
       <section class="section reveal" id="backtest-card" hidden>
         <div class="section__head">
-          <span class="section__num">04</span>
+          <span class="section__num">07</span>
           <h2 class="section__title">Multi-season rolling backtest</h2>
         </div>
         <figure class="ml-fig">
@@ -155,7 +198,7 @@
 
       <section class="section reveal" id="sec-replay">
         <div class="section__head">
-          <span class="section__num">05</span>
+          <span class="section__num">08</span>
           <h2 class="section__title">Replayed over the test weeks</h2>
         </div>
         <figure class="ml-fig">
@@ -169,7 +212,7 @@
 
       <section class="section reveal" id="sec-hood">
         <div class="section__head">
-          <span class="section__num">06</span>
+          <span class="section__num">09</span>
           <h2 class="section__title">Under the hood</h2>
           <p class="caption caption--tight">The held-out test set examined three ways: where the +24h errors fall, which inputs the model leans on, and the full table of numbers behind every claim above.</p>
         </div>
@@ -208,7 +251,7 @@
 
       <section class="section reveal" id="sec-drivers">
         <div class="section__head">
-          <span class="section__num">07</span>
+          <span class="section__num">10</span>
           <h2 class="section__title">Why it works: the driver study</h2>
         </div>
         <figure class="ml-fig">
@@ -224,7 +267,7 @@
 
       <section class="section reveal" id="sec-band">
         <div class="section__head">
-          <span class="section__num">08</span>
+          <span class="section__num">11</span>
           <h2 class="section__title">Anatomy of the uncertainty</h2>
         </div>
         <figure class="ml-fig">
@@ -238,7 +281,7 @@
 
       <section class="section reveal" id="sec-method">
         <div class="section__head">
-          <span class="section__num">09</span>
+          <span class="section__num">12</span>
           <h2 class="section__title">Methodology</h2>
         </div>
         <div class="method">
@@ -295,7 +338,8 @@
   </script>
   <script>
     window.MS_SECTIONS = [
-      ['sec-fan', 'FAN'], ['sec-now', 'NOW'], ['sec-week', 'WEEK'],
+      ['sec-fan', 'FAN'], ['sec-swim', 'SWIM'], ['sec-thresh', 'WARMUP'],
+      ['sec-now', 'NOW'], ['sec-week', 'WEEK'], ['sec-beach', 'BEACH'],
       ['sec-station', 'STATION'], ['sec-skill', 'SKILL'], ['backtest-card', 'BACKTEST'],
       ['sec-replay', 'REPLAY'], ['sec-hood', 'HOOD'], ['sec-drivers', 'DRIVERS'],
       ['sec-band', 'BAND'], ['sec-method', 'METHOD']
@@ -303,6 +347,6 @@
   </script>
   <script src="/nav.js?v=1"></script>
   <script src="/ruler.js?v=3"></script>
-  <script src="/app.js?v=8"></script>
+  <script src="/app.js?v=9"></script>
 </body>
 </html>
