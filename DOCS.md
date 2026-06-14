@@ -2,6 +2,35 @@
 
 Running log of non-obvious decisions and the bugs behind them. Newest first.
 
+## 2026-06-14 — Subsurface streams promoted (tighter upwelling-tail bands)
+
+The long-lead worst case is upwelling / fall turnover: a sudden cold crash
+(2020-09-20 dropped ~16°F) the surface buoy can't anticipate a week out, where
+the model regresses to the mean and runs too warm. Two cheap fixes failed first
+(don't redo): a reactive trend-nudge (`scripts/trend_nudge.py` — the model
+already reacts to live cooling; in active drops it's already slightly too cold),
+and physics anticipation features built from surface data (`upwelling_features.py`
+— corr with the tail ~0.00). The events need information below the surface.
+
+The MUR satellite basin SST + NOAA LMHOFS 3D lake-physics model provide it. On
+stream-covered long-lead rows (`scripts/streams_band.py`): worst-decile MAE
+4.2 → 3.4°F, pinball loss ~10% lower, median better, overall MAE essentially
+flat. LMHOFS is the driver; satellite adds a bit and is the reliable live floor.
+They were rejected before (`validate_streams2`) only because that test scored
+MEDIAN MAE, which the easy short leads dominate; on the tail / 90% band they win.
+
+Promoted into `featuresq` (`stack` + `inference_rows` attach SAT+PHYS via
+`streams.py`, graceful NaN, lazy import to avoid a cycle). Retrained the quantile
+models (`lmhofs_fut` + `sat_basin` now rank top) and regenerated `calib_norm`.
+`publish.py` and the retrain chain refresh the streams live, staleness-gated
+(`fetch_mursst.update`, `fetch_lmhofs.update`).
+
+**Invariant.** A stream fetch failure must NEVER crash the pipeline: missing
+stream data falls back to NaN and the model degrades to surface-only. The
+backtest `cover_diag` must still hold ~0.90 per fold (it does: adaptive spread
+0.036). If the live LMHOFS fetch is down for long, bands run slightly tight
+until the adaptive scale compensates.
+
 ## 2026-06-13 — Live Track Record (forecast logging + verification)
 
 A self-scoring track record: every forecast `publish.py` ships is appended to
