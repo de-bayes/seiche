@@ -104,3 +104,25 @@ COLS = {"SAT": ["sat_x0", "sat_basin", "sat_grad_near", "sat_grad_far",
                 "sat_basin_d3", "sat_err"],
         "PHYS": ["lmhofs_now", "lmhofs_fut", "lmhofs_delta", "lmhofs_err"],
         "BEACH": ["beach_ohio", "beach_gap", "beach_d24"]}
+
+
+def inference_block(buoy_df, t0, horizons, sets=("SAT", "PHYS")):
+    """Stream features at a single base time t0 for each horizon (live forecast),
+    matching build_blocks' per-row construction. Missing data -> NaN."""
+    out = pd.DataFrame(index=range(len(horizons)))
+    if "SAT" in sets:
+        s = sat_hourly(buoy_df)
+        srow = s.loc[t0] if t0 in s.index else None
+        for c in COLS["SAT"]:
+            out[c] = float(srow[c]) if srow is not None and pd.notna(srow.get(c)) else np.nan
+    if "PHYS" in sets:
+        phys = phys_series(buoy_df.index)
+        now = phys.get(t0, np.nan)
+        wtmp0 = buoy_df["WTMP"].get(t0, np.nan)
+        fut = [phys.get(t0 + pd.Timedelta(hours=h), np.nan) if h <= PHYS_MAX_H else np.nan
+               for h in horizons]
+        out["lmhofs_now"] = now
+        out["lmhofs_fut"] = fut
+        out["lmhofs_delta"] = [f - now for f in fut]
+        out["lmhofs_err"] = wtmp0 - now
+    return out

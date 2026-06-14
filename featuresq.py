@@ -49,6 +49,31 @@ def regime_signal(X):
 NEIGHBOR_STATION = "45026"
 NEIGHBOR_PATH = "data/buoy_neighbor.csv"
 
+# subsurface/basin streams PROMOTED into production 2026-06-14: NOAA LMHOFS 3D
+# lake-physics model surface temp at the station + MUR satellite basin SST. They
+# give the surface buoy eyes below the surface and cut the long-lead upwelling
+# tail (worst-decile MAE 4.2->3.4F, pinball -10%) without hurting calm leads. The
+# old validate_streams2 rejected them on MEDIAN MAE; on the tail / 90% band they
+# win. Built by streams.py; missing data -> NaN (HGB handles). See DOCS.md.
+STREAM_SETS = ("SAT", "PHYS")
+STREAM_COLS = ["sat_basin", "sat_grad_near", "sat_grad_far", "sat_basin_d3", "sat_err",
+               "lmhofs_now", "lmhofs_fut", "lmhofs_delta", "lmhofs_err"]
+
+
+def _attach_streams(buoy_df, Xs, horizons):
+    """Concat the promoted stream features onto a stack()-ordered frame. Lazy
+    import (streams imports featuresq). Any failure -> all-NaN columns so the
+    pipeline never breaks when a stream is unavailable."""
+    n = len(Xs)
+    try:
+        import streams
+        blk = streams.build_blocks(buoy_df, horizons=horizons, sets=STREAM_SETS)
+        blk = blk.reindex(columns=STREAM_COLS).reset_index(drop=True)
+    except Exception as e:
+        print(f"  streams unavailable ({e}); filling NaN")
+        blk = pd.DataFrame(np.nan, index=range(n), columns=STREAM_COLS)
+    return pd.concat([Xs.reset_index(drop=True), blk], axis=1)
+
 
 def load_neighbor():
     p = pathlib.Path(NEIGHBOR_PATH)
@@ -93,7 +118,7 @@ def stack(buoy_df, wx, horizons=HSET):
         ys.append(y[ok])
         ts.append(X.index[ok])
         hs.append(np.full(int(ok.sum()), h))
-    Xs = pd.concat(blocks, ignore_index=True)
+    Xs = _attach_streams(buoy_df, pd.concat(blocks, ignore_index=True), horizons)
     return (Xs, pd.concat(ys, ignore_index=True),
             pd.DatetimeIndex(np.concatenate([t.values for t in ts])), np.concatenate(hs))
 
@@ -118,4 +143,12 @@ def inference_rows(buoy_df, wx, t0, horizons):
         row["fut_airwater"] = row["fut_t2m"].iloc[0] - wtmp0
         row["h"] = float(h)
         rows.append(row)
-    return pd.concat(rows, ignore_index=True)
+    out = pd.concat(rows, ignore_index=True)
+    try:
+        import streams
+        blk = streams.inference_block(buoy_df, t0, horizons, sets=STREAM_SETS)
+        blk = blk.reindex(columns=STREAM_COLS).reset_index(drop=True)
+    except Exception as e:
+        print(f"  streams unavailable at inference ({e}); filling NaN")
+        blk = pd.DataFrame(np.nan, index=range(len(out)), columns=STREAM_COLS)
+    return pd.concat([out, blk], axis=1)

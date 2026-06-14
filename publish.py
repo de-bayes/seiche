@@ -4,8 +4,10 @@ to the current observation), a daily digest, current conditions, and the
 full validation statistics. Writes site/data.json and site/stats.json."""
 
 import json
+import os
 import pathlib
 import shutil
+import time
 
 import joblib
 import numpy as np
@@ -13,6 +15,8 @@ import pandas as pd
 
 import buoy
 import featuresq
+import fetch_lmhofs
+import fetch_mursst
 import fetch_weather
 import verify
 
@@ -35,6 +39,24 @@ def smooth_fade(arr, hs):
 print("fetching buoy realtime and weather ensemble...")
 hourly_buoy = buoy.to_hourly([buoy.fetch_realtime()])
 wx_hist = pd.read_csv("data/weather.csv", index_col=0, parse_dates=True)
+
+# refresh the subsurface/basin streams the model now uses (satellite ~daily,
+# LMHOFS forecast ~6-hourly), gated on file age so the 10-min publish does not
+# hammer the services. Fully graceful: a failed fetch leaves the last good data,
+# which ffills then goes NaN, and the model degrades to surface-only features.
+def _stale(path, hours):
+    return (not os.path.exists(path)) or (time.time() - os.path.getmtime(path) > hours * 3600)
+
+if _stale("data/mursst.csv", 12):
+    try:
+        fetch_mursst.update(); print("  refreshed satellite SST")
+    except Exception as e:
+        print(f"  satellite refresh skipped ({e})")
+if _stale("data/lmhofs.csv", 4):
+    try:
+        fetch_lmhofs.update(); print("  refreshed LMHOFS physics")
+    except Exception as e:
+        print(f"  LMHOFS refresh skipped ({e})")
 
 # 31 GEFS perturbed members (sampled weather uncertainty) plus the ECMWF /
 # ICON / GEM deterministic runs (model diversity GEFS alone cannot see).

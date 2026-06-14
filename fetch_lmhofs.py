@@ -320,9 +320,22 @@ def _print_live(s):
     print(f"  +120h {at(now + pd.Timedelta(hours=120)):.2f}C")
 
 
+def update():
+    """Merge the latest live CO-OPS forecast + nowcasts into data/lmhofs.csv so
+    the publish pipeline reads a fresh physics forecast. Safe to call repeatedly."""
+    pieces = []
+    if os.path.exists(PATH):
+        pieces.append(pd.read_csv(PATH, index_col=0, parse_dates=True)[COL])
+    pieces.append(live().rename(COL))
+    _flush(pieces)
+    print(f"updated {PATH}")
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "live"
     if mode == "backfill":
         backfill()
+    elif mode == "update":
+        update()
     else:
         _print_live(live())
